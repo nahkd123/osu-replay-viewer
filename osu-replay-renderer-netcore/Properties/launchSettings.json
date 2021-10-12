@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "osu-replay-renderer-netcore": {
+      "commandName": "Project",
+      "commandLineArgs": "view auto:2361635"
+    }
+  }
+}
