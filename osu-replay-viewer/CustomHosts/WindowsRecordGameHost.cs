@@ -3,6 +3,7 @@ using osu.Framework;
 using osu.Framework.Bindables;
 using osu.Framework.Configuration;
 using osu.Framework.Extensions.IEnumerableExtensions;
+using osu.Framework.Input.Handlers;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Framework.Platform.Windows;
@@ -36,8 +37,8 @@ namespace osu_replay_renderer_netcore.CustomHosts
 
         private RecordClock recordClock;
         protected override IFrameBasedClock SceneGraphClock => recordClock;
-
         protected override IWindow CreateWindow() => new WindowsWindow();
+        protected override IEnumerable<InputHandler> CreateAvailableInputHandlers() => new InputHandler[] { };
 
         public System.Drawing.Size Resolution { get; set; } = new System.Drawing.Size { Width = 1280, Height = 600 };
         public ExternalFFmpegEncoder Encoder { get; set; }
