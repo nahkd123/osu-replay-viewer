@@ -13,8 +13,11 @@ namespace osu_replay_renderer_netcore
 {
     class RecorderReplayPlayer : ReplayPlayer
     {
+        public Score GivenScore { get; private set; }
+
         public RecorderReplayPlayer(Score score) : base(score)
         {
+            GivenScore = score;
         }
 
         protected override void LoadComplete()
