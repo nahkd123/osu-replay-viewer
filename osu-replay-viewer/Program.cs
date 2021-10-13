@@ -48,6 +48,12 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine("    --record-fps <FPS>");
                 Console.WriteLine("    Set record FPS (Only for record platform host)");
                 Console.WriteLine();
+                Console.WriteLine("    --record-frames-blending <Amount>");
+                Console.WriteLine("    Set frames blending (1 or lower to disable)");
+                Console.WriteLine();
+                Console.WriteLine("    --record-minterpolate");
+                Console.WriteLine("    Enable Motion Interpolation (frames blending must be disabled)");
+                Console.WriteLine();
                 Console.WriteLine("    --record-ffmpeg-preset <FFmpeg Preset>");
                 Console.WriteLine("    Set FFmpeg encoding preset");
                 Console.WriteLine();
@@ -64,6 +70,8 @@ namespace osu_replay_renderer_netcore
 
             bool isRecord = false;
             int recordFPS = 60;
+            int recordFramesBlending = 1;
+            bool recordMinterpolate = false;
             string recordPreset = "veryslow";
             string recordMiddlemanTarget = "png";
             string recordOutput = "osu-replay.mp4";
@@ -86,6 +94,8 @@ namespace osu_replay_renderer_netcore
                         i += 2;
                         break;
                     case "--record-fps": recordFPS = int.Parse(args[i + 1]); i++; break;
+                    case "--record-frames-blending": recordFramesBlending = int.Parse(args[i + 1]); i++; break;
+                    case "--record-minterpolate": recordMinterpolate = true; break;
                     case "--record-ffmpeg-preset": recordPreset = args[i + 1]; i++; break;
                     case "--record-middleman": recordMiddlemanTarget = args[i + 1]; i++; break;
                     case "--record-output": recordOutput = args[i + 1]; i++; break;
@@ -100,7 +110,7 @@ namespace osu_replay_renderer_netcore
             if (isHeadless) host = new WindowsHeadlessGameHost("osu", false, false);
             else if (isRecord)
             {
-                var host2 = new WindowsRecordGameHost("osu", recordFPS);
+                var host2 = new WindowsRecordGameHost("osu", recordFPS * Math.Max(recordFramesBlending, 1));
                 host2.Resolution = recordResolution;
                 if (File.Exists(recordOutput))
                 {
@@ -108,12 +118,18 @@ namespace osu_replay_renderer_netcore
                     Console.Error.WriteLine("Either delete or rename it");
                     return;
                 }
-                host2.Encoder = new CustomHosts.Record.ExternalFFmpegEncoder(
-                    recordFPS,
-                    recordMiddlemanTarget,
-                    recordOutput,
-                    recordPreset
-                );
+                host2.Encoder = new CustomHosts.Record.ExternalFFmpegEncoder()
+                {
+                    FPS = recordFPS,
+                    ImageFormat = recordMiddlemanTarget,
+                    OutputPath = recordOutput,
+                    Preset = recordPreset,
+
+                    // Smoothing options
+                    FramesBlending = recordFramesBlending,
+                    MotionInterpolation = recordMinterpolate,
+                };
+                host2.Encoder.StartFFmpeg();
                 host2.RecordMiddleman = recordMiddlemanTarget;
                 host = host2;
             }
