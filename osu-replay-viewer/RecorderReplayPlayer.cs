@@ -16,6 +16,7 @@ namespace osu_replay_renderer_netcore
     class RecorderReplayPlayer : ReplayPlayer
     {
         public Score GivenScore { get; private set; }
+        public bool ManipulateClock { get; set; } = false;
 
         public RecorderReplayPlayer(Score score) : base(score)
         {
@@ -29,16 +30,18 @@ namespace osu_replay_renderer_netcore
             HUDOverlay.HoldToQuit.Hide();
             //DrawablesUtils.RemoveRecursive(HUDOverlay, v => v == HUDOverlay.PlayerSettingsOverlay);
             HUDOverlay.RemoveRecursive(v => v == HUDOverlay.PlayerSettingsOverlay);
+            GameplayClockContainer.RemoveRecursive(v => v is SkipOverlay);
         }
 
         protected override void StartGameplay()
         {
-            //base.StartGameplay();
-            //(GameplayClockContainer.GameplayClock.Source as OsuGameRecorder.WrappedClock).RunningState = true;
-            GameplayClockContainer.Reset();
-            GameplayClockContainer.Start();
-            var clock = (GameplayClockContainer.GameplayClock.Source as FramedOffsetClock).Source as OsuGameRecorder.WrappedClock;
-            clock.TimeOffset = -clock.CurrentTime - 2000;
+            if (ManipulateClock)
+            {
+                GameplayClockContainer.Reset();
+                GameplayClockContainer.Start();
+                var clock = (GameplayClockContainer.GameplayClock.Source as FramedOffsetClock).Source as OsuGameRecorder.WrappedClock;
+                clock.TimeOffset = -clock.CurrentTime - 2000;
+            } else base.StartGameplay();
         }
     }
 }

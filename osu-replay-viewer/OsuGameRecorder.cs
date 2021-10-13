@@ -14,11 +14,13 @@ using osu.Game.Graphics.Cursor;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Osu;
 using osu.Game.Scoring;
+using osu.Game.Scoring.Legacy;
 using osu.Game.Screens.Play;
 using osu.Game.Screens.Ranking;
 using osu.Game.Screens.Ranking.Statistics;
 using osu_replay_renderer_netcore.CustomHosts;
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 
@@ -105,6 +107,30 @@ namespace osu_replay_renderer_netcore
                     long onlineId = long.Parse(scoreId.Substring(7));
                     score = ScoreManager.GetScore(ScoreManager.QueryScores(v => v.OnlineScoreID == onlineId).First());
                 }
+                else if (scoreId.StartsWith("file:"))
+                {
+                    string filePath = scoreId.Substring(5);
+                    if (!File.Exists(filePath))
+                    {
+                        Console.Error.WriteLine("Score not found: " + filePath);
+                        GracefullyExit();
+                        return;
+                    }
+
+                    using (FileStream stream = new(filePath, FileMode.Open)) {
+                        var decoder = new DatabasedLegacyScoreDecoder(RulesetStore, BeatmapManager);
+                        try
+                        {
+                            score = decoder.Parse(stream);
+                            score.ScoreInfo.BeatmapInfoID = BeatmapManager.QueryBeatmap(v => v.OnlineBeatmapID == score.ScoreInfo.BeatmapInfo.OnlineBeatmapID).ID;
+                        }
+                        catch (LegacyScoreDecoder.BeatmapNotFoundException e)
+                        {
+                            Console.Error.WriteLine("Beatmap not found while opening replay: " + e.Message);
+                            score = null;
+                        }
+                    }
+                }
                 else
                 {
                     int localId = int.Parse(scoreId);
@@ -184,6 +210,8 @@ namespace osu_replay_renderer_netcore
             }
             if (newScreen is RecorderReplayPlayer player && Host is WindowsRecordGameHost)
             {
+                player.ManipulateClock = true;
+
                 MethodInfo getGameplayClockContainer = typeof(Player).GetDeclaredMethod("get_GameplayClockContainer");
                 var clockContainer = getGameplayClockContainer.Invoke(player, null) as GameplayClockContainer;
                 //clockContainer.GameplayClock
