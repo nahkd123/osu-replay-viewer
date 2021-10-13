@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30611.23
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "osu-replay-viewer", "osu-replay-renderer-netcore\osu-replay-viewer.csproj", "{75CFB698-1730-4877-A327-6197D1F2C65D}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{ABA4CBB9-6558-4E94-BC3D-8779AA2AF26B}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		readme.md = readme.md
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "osu-replay-viewer", "osu-replay-viewer\osu-replay-viewer.csproj", "{A14A12BA-5BE2-4A75-B134-5A1D62E2B46C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{75CFB698-1730-4877-A327-6197D1F2C65D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{75CFB698-1730-4877-A327-6197D1F2C65D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{75CFB698-1730-4877-A327-6197D1F2C65D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{75CFB698-1730-4877-A327-6197D1F2C65D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A14A12BA-5BE2-4A75-B134-5A1D62E2B46C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A14A12BA-5BE2-4A75-B134-5A1D62E2B46C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A14A12BA-5BE2-4A75-B134-5A1D62E2B46C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A14A12BA-5BE2-4A75-B134-5A1D62E2B46C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
