@@ -5,6 +5,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Input;
 using osu.Framework.Screens;
 using osu.Framework.Threading;
+using osu.Framework.Timing;
 using osu.Framework.Utils;
 using osu.Game;
 using osu.Game.Beatmaps;
@@ -13,8 +14,10 @@ using osu.Game.Graphics.Cursor;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Osu;
 using osu.Game.Scoring;
+using osu.Game.Screens.Play;
 using osu.Game.Screens.Ranking;
 using osu.Game.Screens.Ranking.Statistics;
+using osu_replay_renderer_netcore.CustomHosts;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -123,8 +126,9 @@ namespace osu_replay_renderer_netcore
 
         private void LoadViewer(Score score, Ruleset ruleset)
         {
-            // Apply some configurations
+            // Apply some stuffs
             config.SetValue(FrameworkSetting.ConfineMouseMode, ConfineMouseMode.Never);
+            if (!(Host is WindowsRecordGameHost)) config.SetValue(FrameworkSetting.FrameSync, FrameSync.VSync);
 
             ScreenStack = new RecorderScreenStack();
             LoadComponent(ScreenStack);
@@ -178,6 +182,36 @@ namespace osu_replay_renderer_netcore
                     }, 2500);
                 };
             }
+            if (newScreen is RecorderReplayPlayer player && Host is WindowsRecordGameHost)
+            {
+                MethodInfo getGameplayClockContainer = typeof(Player).GetDeclaredMethod("get_GameplayClockContainer");
+                var clockContainer = getGameplayClockContainer.Invoke(player, null) as GameplayClockContainer;
+                //clockContainer.GameplayClock
+
+                //MethodInfo setGameplayClock = typeof(GameplayClockContainer).GetDeclaredMethod("set_GameplayClock");
+                var wrapped = new WrappedClock(Clock);
+                (clockContainer.GameplayClock.Source as FramedOffsetClock).ChangeSource(wrapped);
+            }
+        }
+
+        public class WrappedClock : IFrameBasedClock
+        {
+            private IFrameBasedClock wrap;
+            public double TimeOffset { get; set; } = 0;
+
+            public WrappedClock(IFrameBasedClock wrap)
+            {
+                this.wrap = wrap;
+            }
+
+            public double ElapsedFrameTime => wrap.ElapsedFrameTime;
+            public double FramesPerSecond => wrap.FramesPerSecond;
+            public FrameTimeInfo TimeInfo => new FrameTimeInfo { Current = CurrentTime, Elapsed = ElapsedFrameTime };
+            public double CurrentTime => wrap.CurrentTime + TimeOffset;
+            public double Rate => wrap.Rate;
+            public bool IsRunning => wrap.IsRunning;
+
+            public void ProcessFrame() { wrap.ProcessFrame(); }
         }
     }
 }

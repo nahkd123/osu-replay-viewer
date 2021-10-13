@@ -1,4 +1,6 @@
 ﻿using osu.Framework.Extensions;
+using osu.Framework.Timing;
+using osu.Game;
 using osu.Game.Scoring;
 using osu.Game.Screens.Play;
 using osu.Game.Screens.Play.HUD;
@@ -27,6 +29,16 @@ namespace osu_replay_renderer_netcore
             HUDOverlay.HoldToQuit.Hide();
             //DrawablesUtils.RemoveRecursive(HUDOverlay, v => v == HUDOverlay.PlayerSettingsOverlay);
             HUDOverlay.RemoveRecursive(v => v == HUDOverlay.PlayerSettingsOverlay);
+        }
+
+        protected override void StartGameplay()
+        {
+            //base.StartGameplay();
+            //(GameplayClockContainer.GameplayClock.Source as OsuGameRecorder.WrappedClock).RunningState = true;
+            GameplayClockContainer.Reset();
+            GameplayClockContainer.Start();
+            var clock = (GameplayClockContainer.GameplayClock.Source as FramedOffsetClock).Source as OsuGameRecorder.WrappedClock;
+            clock.TimeOffset = -clock.CurrentTime - 2000;
         }
     }
 }
