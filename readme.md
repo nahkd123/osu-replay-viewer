@@ -9,8 +9,8 @@ This project aims to make replay viewer without modifying the official game code
 thing from scratch, but uses components from the game instead. Because of this, it's much more easy
 to upgrade to make UI matches with actual game;
 
-This project somewhat implemented [this](https://github.com/ppy/osu/discussions/12986) idea (except
-we're running outside the official client)
+> This project somewhat implemented [this](https://github.com/ppy/osu/discussions/12986) idea (except
+  we're running outside the official client)
 
 ## Features
 - View downloaded replays
@@ -31,8 +31,10 @@ we're running outside the official client)
 ## Installing FFmpeg
 1. Grab FFmpeg binaries [here](https://www.ffmpeg.org/download.html)
   > Linux users can also install FFmpeg from package manager included in their distribution
+
   > Windows users can download FFmpeg [here](https://www.gyan.dev/ffmpeg/builds/) or
     [here](https://github.com/BtbN/FFmpeg-Builds/releases)
+
 2. Include ``ffmpeg`` in command line path
 3. Confirm that it's working by running ``ffmpeg`` alone
 
