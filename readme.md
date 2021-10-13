@@ -20,6 +20,7 @@ to upgrade to make UI matches with actual game;
 ## To-dos
 - Record audio (seems impossible until osu!framework allow us to replace AudioThread)
 - Clean up messy code
+- Allow user to choose different osu!lazer application directory
 
 ## Requirements
 - [.NET 5.0](https://dotnet.microsoft.com/download/dotnet/5.0)
@@ -37,6 +38,32 @@ to upgrade to make UI matches with actual game;
 
 2. Include ``ffmpeg`` in command line path
 3. Confirm that it's working by running ``ffmpeg`` alone
+
+## Command Line arguments
+> You can view all command line arguments by running the executable alone
+
+Usage: ``[...Options] Subcommand <...Subcommand Arguments>``
+
+### Subcommands
+- ``view <Local Replay ID>``, ``view online:<Online Replay ID>`` or ``view file:<File.osr>``:
+  View replay
+- ``list``: View all downloaded scores/replays as list, including ruleset, selected mods and ranked
+  score
+- ``download <Online Replay Id>``: Attempt to download replay from osu.ppy.sh (broken right now
+  because you need to log in in order to download replays)
+
+### Options
+- ``--headless``: Run replay viewer without window. Designed to test some features
+- ``--record`` or ``-R``: Run replay viewer and record it to video file
+- ``--record-resolution <Width> <Height>`` or ``-RS <Width> <Height>``: Set record resolution
+- ``--record-fps <FPS>`` or ``-RF <FPS>``: Set record final frame rate
+- ``--record-frames-blending <Amount>`` or ``-RB <Amount>``: Smooth recorded gameplay by blending
+  multiple frames together
+- ``--record-minterpolate`` or ``-RMI``: Apply x4 motion interpolation to recorded gameplay
+- ``--record-ffmpeg-preset <Preset>`` or ``-RP <Preset>``: Set FFmpeg encoding preset
+- ``--record-middleman <png/mjpeg>`` or ``--RMM <png/mjpeg>``: Set image middleman. PNG gives
+  better quality, but slower to encode
+- ``--record-output <Output.mp4>`` or ``-O <Output.mp4>``: Set recorded gameplay output
 
 ## Build
 To build this project, you need:
