@@ -1,8 +1,10 @@
 ﻿using AutoMapper.Internal;
 using osu.Framework.Allocation;
+using osu.Framework.Audio.Mixing;
 using osu.Framework.Configuration;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input;
+using osu.Framework.Platform;
 using osu.Framework.Screens;
 using osu.Framework.Threading;
 using osu.Framework.Timing;
@@ -12,6 +14,7 @@ using osu.Game.Beatmaps;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Cursor;
 using osu.Game.Rulesets;
+using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Osu;
 using osu.Game.Scoring;
 using osu.Game.Scoring.Legacy;
@@ -23,6 +26,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace osu_replay_renderer_netcore
 {
@@ -71,7 +75,7 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine();
                 GracefullyExit();
             }
-            if (subcommand.Equals("download"))
+            else if (subcommand.Equals("download"))
             {
                 Console.WriteLine("Downloading " + ProgramArguments[1] + "...");
                 var model = new ScoreInfo()
@@ -98,7 +102,7 @@ namespace osu_replay_renderer_netcore
                     throw fail;
                 };
             }
-            if (subcommand.Equals("view"))
+            else if (subcommand.Equals("view"))
             {
                 string scoreId = ProgramArguments[1].ToLower();
                 Score score;
@@ -145,6 +149,15 @@ namespace osu_replay_renderer_netcore
 
                 LoadViewer(score, ruleset);
             }
+            else
+            {
+                Console.Error.WriteLine(" !! ");
+                Console.Error.WriteLine(" !! ");
+                Console.Error.WriteLine(" !! Unknown subcommand: " + subcommand);
+                Console.Error.WriteLine(" !! ");
+                Console.Error.WriteLine(" !! ");
+                GracefullyExit();
+            }
         }
 
         [Resolved]
@@ -155,6 +168,9 @@ namespace osu_replay_renderer_netcore
             // Apply some stuffs
             config.SetValue(FrameworkSetting.ConfineMouseMode, ConfineMouseMode.Never);
             if (!(Host is WindowsRecordGameHost)) config.SetValue(FrameworkSetting.FrameSync, FrameSync.VSync);
+            Audio.Balance.Value = 0;
+            Audio.TrackMixer.Balance.Value = 0;
+            Audio.SampleMixer.Balance.Value = 0;
 
             ScreenStack = new RecorderScreenStack();
             LoadComponent(ScreenStack);
@@ -175,6 +191,27 @@ namespace osu_replay_renderer_netcore
             ScreenStack.ScreenPushed += ScreenStack_ScreenPushed;
 
             MenuCursorContainer.Cursor.RemoveAll(v => true);
+
+            if (Host is HeadlessGameHost headless)
+            {
+                Console.WriteLine("Headless Host detected");
+
+                // (Audio.TrackMixer as BassAudioMixer)
+                // This is some sort of bad practice, but we want to capture audio output that's
+                // generated from Bass
+                // Hopefully we can replace audio mixer with our own in the future...
+
+                /*var BassAudioMixer = typeof(AudioMixer).Assembly.GetType("osu.Framework.Audio.Mixing.Bass.BassAudioMixer");
+                var getHandle = BassAudioMixer.GetDeclaredMethod("get_Handle");
+                int trackHandle = (int)getHandle.Invoke(Audio.TrackMixer, null);
+                int sampleHandle = (int)getHandle.Invoke(Audio.SampleMixer, null);*/
+                if (headless is WindowsHeadlessGameHost wrv)
+                {
+                    /*wrv.TrackMixerHandle = trackHandle;
+                    wrv.SampleMixerHandle = sampleHandle;*/
+                    wrv.PrepareAudioDevices();
+                }
+            }
         }
 
         private void ScreenStack_ScreenPushed(IScreen lastScreen, IScreen newScreen)
@@ -201,11 +238,29 @@ namespace osu_replay_renderer_netcore
                     MethodInfo internalChildStatsMethod = typeof(CompositeDrawable).GetDeclaredMethod("get_InternalChild");
                     var container2 = internalChildStatsMethod.Invoke(statisticsPanel, null) as Container;
                     container2.Remove(container2.Children[1]); // kill the loading spinner
-                    // If ppy changed the StatisticsPanel.cs again, please notify me.
+
                     Scheduler.AddDelayed(() =>
                     {
                         statisticsPanel.ToggleVisibility();
                     }, 2500);
+                    
+                    if (Host is WindowsRecordGameHost || Host is HeadlessGameHost)
+                    {
+                        Scheduler.AddDelayed(() =>
+                        {
+                            if (Host is WindowsRecordGameHost recordHost) recordHost.UsingEncoder = false;
+                            if (Host is WindowsHeadlessGameHost headlessHost && headlessHost.OutputAudioToFile != null) headlessHost.UsingAudioRecorder = false;
+                        }, 10000);
+                        Scheduler.AddDelayed(() =>
+                        {
+                            if (Host is WindowsRecordGameHost recordHost)
+                            {
+                                recordHost.Encoder.FFmpeg.StandardInput.Close();
+                                recordHost.Encoder = null;
+                            }
+                            GracefullyExit();
+                        }, 11000);
+                    }
                 };
             }
             if (newScreen is RecorderReplayPlayer player && Host is WindowsRecordGameHost)
@@ -222,10 +277,14 @@ namespace osu_replay_renderer_netcore
             }
         }
 
+        /// <summary>
+        /// Dirty wrapped clock which allow me to manipulate gameplay clock
+        /// </summary>
         public class WrappedClock : IFrameBasedClock
         {
             private IFrameBasedClock wrap;
             public double TimeOffset { get; set; } = 0;
+            public IApplicableToRate RateMod { get; set; } = null;
 
             public WrappedClock(IFrameBasedClock wrap)
             {
@@ -235,8 +294,22 @@ namespace osu_replay_renderer_netcore
             public double ElapsedFrameTime => wrap.ElapsedFrameTime;
             public double FramesPerSecond => wrap.FramesPerSecond;
             public FrameTimeInfo TimeInfo => new FrameTimeInfo { Current = CurrentTime, Elapsed = ElapsedFrameTime };
-            public double CurrentTime => wrap.CurrentTime + TimeOffset;
-            public double Rate => wrap.Rate;
+            public double UnderlyingTime => wrap.CurrentTime + TimeOffset;
+            public double CurrentTime {
+                get
+                {
+                    if (RateMod == null) return UnderlyingTime;
+                    return UnderlyingTime * RateMod.ApplyToRate(UnderlyingTime);
+                }
+            }
+            public double Rate
+            {
+                get
+                {
+                    if (RateMod == null) return 1.0;
+                    return RateMod.ApplyToRate(UnderlyingTime);
+                }
+            }
             public bool IsRunning => wrap.IsRunning;
 
             public void ProcessFrame() { wrap.ProcessFrame(); }

@@ -1,20 +1,27 @@
-﻿using osu.Framework.Extensions.IEnumerableExtensions;
+﻿using ManagedBass;
+using osu.Framework.Configuration;
+using osu.Framework.Extensions.IEnumerableExtensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
-using osu.Framework.Input;
 using osu.Framework.Platform;
-using osu.Framework.Screens;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace osu_replay_renderer_netcore.CustomHosts
 {
     public class WindowsHeadlessGameHost : HeadlessGameHost
     {
         public override IEnumerable<string> UserStoragePaths => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).Yield();
+
+        public string OutputAudioToFile { get; set; } = null;
+        public int AudioInputDevice { get; set; } = -1;
+        public int AudioOutputDevice { get; set; } = -1;
+        public bool UsingAudioRecorder { get; set; } = true;
+
+        //public int TrackMixerHandle { get; set; } = 0;
+        //public int SampleMixerHandle { get; set; } = 0;
 
         public WindowsHeadlessGameHost(
             string gameName = null,
@@ -24,23 +31,102 @@ namespace osu_replay_renderer_netcore.CustomHosts
         ) : base(gameName, bindIPC, realtime, portableInstallation)
         {}
 
-        int frames = 0;
+        //int frames = 0;
+
+        private Stream fileStream;
+        private WaveFileWriter waveFileWriter;
+        public void PrepareAudioDevices()
+        {
+            fileStream = new FileStream(OutputAudioToFile, FileMode.CreateNew);
+            waveFileWriter = new WaveFileWriter(fileStream, new WaveFormat(44100, 2));
+
+            // Approach 1: Not using loopback
+            /*Console.WriteLine("Rate = " + Bass.ChannelGetInfo(TrackMixerHandle).Frequency);
+            int limit = 1200;
+
+            ScheduledDelegate scheduledDelegate = null;
+            scheduledDelegate = AudioThread.Scheduler.AddDelayed(() =>
+            {
+                NextAudio();
+                limit--;
+                Console.WriteLine(limit);
+                if (limit == 0)
+                {
+                    scheduledDelegate.Cancel();
+                    waveFileWriter.Dispose();
+                    fileStream.Close();
+                }
+
+            }, 20, true);*/
+
+            // Approach 2: Using loopback device
+            var prevMasterVolume = Config.Get<double>(FrameworkSetting.VolumeUniversal);
+            Config.SetValue(FrameworkSetting.VolumeUniversal, 1.0);
+
+            var prevDevice = Config.Get<string>(FrameworkSetting.AudioDevice);
+            Config.SetValue(FrameworkSetting.AudioDevice, Bass.GetDeviceInfo(AudioOutputDevice).Name);
+
+            Bass.RecordInit(AudioInputDevice);
+            Bass.RecordStart(44100, 2, 0, (handle, bufferPointer, length, user) =>
+            {
+                short[] buffer = new short[length / 2];
+                Marshal.Copy(bufferPointer, buffer, 0, length / 2);
+                waveFileWriter.Write(buffer, length);
+                if (!UsingAudioRecorder)
+                {
+                    waveFileWriter.Dispose();
+                    fileStream.Close();
+                    Console.WriteLine("Restoring previous framework settings...");
+                    Config.SetValue(FrameworkSetting.AudioDevice, prevDevice);
+                    Config.SetValue(FrameworkSetting.VolumeUniversal, prevMasterVolume);
+                }
+                return UsingAudioRecorder;
+            });
+        }
+
+        // Audio quality is quite horrible if we use the first approach
+        // I decided to comment out this entire code
+        /*private short[] trackBuffer, sampleBuffer;
+        private short trackLastElement = 0, sampleLastElement = 0; // Smoothing output
+        private void NextAudio()
+        {
+            var size = (int)Bass.ChannelSeconds2Bytes(TrackMixerHandle, 0.02);
+            if (trackBuffer == null)
+            {
+                trackBuffer = new short[size / 2];
+                sampleBuffer = new short[size / 2];
+            }
+
+            Bass.ChannelGetData(TrackMixerHandle, trackBuffer, size);
+            Bass.ChannelGetData(SampleMixerHandle, sampleBuffer, size);
+
+            if (trackLastElement != 0) trackBuffer[0] = (short)(trackLastElement / 2 + trackBuffer[0] / 2);
+            if (sampleLastElement != 0) sampleBuffer[0] = (short)(sampleLastElement / 2 + sampleBuffer[0] / 2);
+            trackLastElement = trackBuffer[trackBuffer.Length - 1];
+            sampleLastElement = sampleBuffer[trackBuffer.Length - 1];
+
+            for (int i = 0; i < size / 2; i++)
+            {
+                trackBuffer[i] = (short)((trackBuffer[i] + sampleBuffer[i]) / 2);
+            }
+            waveFileWriter.Write(trackBuffer, size);
+        }*/
 
         protected override void DrawFrame()
         {
             if (Root == null) return;
-            var container = Root.Child as PlatformActionContainer;
+            //var container = Root.Child as PlatformActionContainer;
 
             // Here we'll do something to the container
             // Let's just print it out as a tree!
-            frames++;
+            /*frames++;
             if ((frames) % 240 == 0)
             {
                 Console.Clear();
                 Console.WriteLine("Screen Report:");
                 PrintAsTree(container, 0);
                 Console.WriteLine();
-            }
+            }*/
         }
 
         private void PrintAsTree(Drawable drawable, int depth)

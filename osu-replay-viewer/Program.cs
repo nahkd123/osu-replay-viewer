@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using ManagedBass;
+using NUnit.Framework;
 using osu.Framework;
 using osu.Framework.Platform;
 using osu.Framework.Timing;
@@ -39,6 +40,12 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine("    --headless");
                 Console.WriteLine("    Use headless platform host (No images will be rendered)");
                 Console.WriteLine();
+                Console.WriteLine("    --audio-devices");
+                Console.WriteLine("    View all audio devices");
+                Console.WriteLine();
+                Console.WriteLine("    --headless-loopback <Input Device ID> <Output Device ID> <Output.wav>");
+                Console.WriteLine("    Setup audio loopback for headless game host");
+                Console.WriteLine();
                 Console.WriteLine("    --record                               | -R");
                 Console.WriteLine("    Use record platform host");
                 Console.WriteLine();
@@ -64,6 +71,8 @@ namespace osu_replay_renderer_netcore
             }
 
             bool isHeadless = false;
+            int headlessInput = -1, headlessOutput = -1;
+            string headlessOutputFile = null;
 
             bool isRecord = false;
             int recordFPS = 60;
@@ -84,6 +93,29 @@ namespace osu_replay_renderer_netcore
                 switch (args[i])
                 {
                     case "--headless": isHeadless = true; break;
+                    case "--headless-loopback":
+                        headlessInput = int.Parse(args[i + 1]);
+                        headlessOutput = int.Parse(args[i + 2]);
+                        headlessOutputFile = args[i + 3];
+                        i += 3;
+                        break;
+                    case "--audio-devices":
+                        var devices = Bass.RecordingDeviceCount;
+                        Console.WriteLine("BASS Input Devices (" + devices + "):");
+                        for (int j = 0; j < devices; j++)
+                        {
+                            var device = Bass.RecordGetDeviceInfo(j);
+                            Console.WriteLine(" #" + j + ": " + device.Name + (device.IsLoopback ? " (Loopback Device)" : ""));
+                        }
+
+                        devices = Bass.DeviceCount;
+                        Console.WriteLine("BASS Output Devices (" + devices + "):");
+                        for (int j = 0; j < devices; j++)
+                        {
+                            var device = Bass.GetDeviceInfo(j);
+                            Console.WriteLine(" #" + j + ": " + device.Name);
+                        }
+                        return;
 
                     case "--record":
                     case "-R": isRecord = true; break;
@@ -116,7 +148,12 @@ namespace osu_replay_renderer_netcore
             DesktopGameHost host;
 
             // In the future we'll use something that's cross-platform
-            if (isHeadless) host = new WindowsHeadlessGameHost("osu", false, false);
+            if (isHeadless) host = new WindowsHeadlessGameHost("osu", false, true)
+            {
+                OutputAudioToFile = headlessOutputFile,
+                AudioInputDevice = headlessInput,
+                AudioOutputDevice = headlessOutput
+            };
             else if (isRecord)
             {
                 var host2 = new WindowsRecordGameHost("osu", recordFPS * Math.Max(recordFramesBlending, 1));

@@ -1,6 +1,7 @@
 ﻿using osu.Framework.Extensions;
 using osu.Framework.Timing;
 using osu.Game;
+using osu.Game.Rulesets.Mods;
 using osu.Game.Scoring;
 using osu.Game.Screens.Play;
 using osu.Game.Screens.Play.HUD;
@@ -41,6 +42,10 @@ namespace osu_replay_renderer_netcore
                 GameplayClockContainer.Start();
                 var clock = (GameplayClockContainer.GameplayClock.Source as FramedOffsetClock).Source as OsuGameRecorder.WrappedClock;
                 clock.TimeOffset = -clock.CurrentTime - 2000;
+                foreach (Mod mod in GivenScore.ScoreInfo.Mods)
+                {
+                    if (mod is IApplicableToRate rateMod) clock.RateMod = rateMod;
+                }
             } else base.StartGameplay();
         }
     }

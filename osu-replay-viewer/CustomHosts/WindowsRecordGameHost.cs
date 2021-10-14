@@ -42,6 +42,7 @@ namespace osu_replay_renderer_netcore.CustomHosts
 
         public System.Drawing.Size Resolution { get; set; } = new System.Drawing.Size { Width = 1280, Height = 600 };
         public ExternalFFmpegEncoder Encoder { get; set; }
+        public bool UsingEncoder { get; set; } = true;
 
         public WindowsRecordGameHost(string gameName = null, int frameRate = 60) : base(gameName, false)
         {
@@ -50,7 +51,7 @@ namespace osu_replay_renderer_netcore.CustomHosts
 
         protected override void SetupConfig(IDictionary<FrameworkSetting, object> defaultOverrides)
         {
-            defaultOverrides[FrameworkSetting.AudioDevice] = "No sound";
+            //defaultOverrides[FrameworkSetting.AudioDevice] = "No sound";
             base.SetupConfig(defaultOverrides);
         }
 
@@ -104,7 +105,7 @@ namespace osu_replay_renderer_netcore.CustomHosts
                 Image<Rgba32> ss = previousScreenshotTask.Result;
                 //if (!Directory.Exists(@"video")) Directory.CreateDirectory(@"video");
                 //ss.SaveAsJpeg(@"./video/" + recordClock.CurrentFrame.ToString().PadLeft(8, '0') + ".jpeg");
-                if (Encoder != null) Encoder.WriteRGBA(ss);
+                if (UsingEncoder && Encoder != null) Encoder.WriteRGBA(ss);
             }
             previousScreenshotTask = TakeScreenshotAsync();
         }
