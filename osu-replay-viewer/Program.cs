@@ -57,9 +57,6 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine("    --record-ffmpeg-preset <FFmpeg Preset> | -RP <FFmpeg Preset>");
                 Console.WriteLine("    Set FFmpeg encoding preset");
                 Console.WriteLine();
-                Console.WriteLine("    --record-middleman <png/mjpeg>         | -RMM <png/mjpeg>");
-                Console.WriteLine("    Set image middleman. PNG gives better quality, but slow to encode");
-                Console.WriteLine();
                 Console.WriteLine("    --record-output <Path/To/File.mp4>     | -O <...>");
                 Console.WriteLine("    Set record output file path");
                 Console.WriteLine();
@@ -73,7 +70,6 @@ namespace osu_replay_renderer_netcore
             int recordFramesBlending = 1;
             bool recordMinterpolate = false;
             string recordPreset = "veryslow";
-            string recordMiddlemanTarget = "png";
             string recordOutput = "osu-replay.mp4";
             System.Drawing.Size recordResolution = new System.Drawing.Size { Width = 1280, Height = 600 };
 
@@ -110,9 +106,6 @@ namespace osu_replay_renderer_netcore
                     case "--record-ffmpeg-preset":
                     case "-RP": recordPreset = args[i + 1]; i++; break;
 
-                    case "--record-middleman":
-                    case "-RMM": recordMiddlemanTarget = args[i + 1]; i++; break;
-
                     case "--record-output":
                     case "-O": recordOutput = args[i + 1]; i++; break;
                     default: break;
@@ -137,7 +130,7 @@ namespace osu_replay_renderer_netcore
                 host2.Encoder = new CustomHosts.Record.ExternalFFmpegEncoder()
                 {
                     FPS = recordFPS,
-                    ImageFormat = recordMiddlemanTarget,
+                    Resolution = recordResolution,
                     OutputPath = recordOutput,
                     Preset = recordPreset,
 
@@ -146,7 +139,6 @@ namespace osu_replay_renderer_netcore
                     MotionInterpolation = recordMinterpolate,
                 };
                 host2.Encoder.StartFFmpeg();
-                host2.RecordMiddleman = recordMiddlemanTarget;
                 host = host2;
             }
             else host = Host.GetSuitableHost("osu", false);
