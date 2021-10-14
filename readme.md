@@ -61,20 +61,11 @@ Usage: ``[...Options] Subcommand <...Subcommand Arguments>``
   multiple frames together
 - ``--record-minterpolate`` or ``-RMI``: Apply x4 motion interpolation to recorded gameplay
 - ``--record-ffmpeg-preset <Preset>`` or ``-RP <Preset>``: Set FFmpeg encoding preset
-- ``--record-middleman <png/mjpeg>`` or ``--RMM <png/mjpeg>``: Set image middleman. PNG gives
-  better quality, but slower to encode
 - ``--record-output <Output.mp4>`` or ``-O <Output.mp4>``: Set recorded gameplay output
 
 ## Build
 To build this project, you need:
 
 - .NET 5.0 SDK
-- NuGet Package: ``ppy.osu.Game 0.0.0`` (build from source)
-- NuGet Package: ``ppy.osu.Game.Rulesets.Osu 1.0.0`` (build from source)
-
-Build NuGet packages from source please. Get source code [here](https://github.com/ppy/osu)
-
-### Make ``ppy.osu.Game`` NuGet packages
-To make packages, simply type ``dotnet pack osu.Game`` and ``dotnet pack osu.Game.Rulesets.Osu``, then
-install those packages to your local packages source (Eg: ``nuget add ppy.osu.Game.0.0.0.nupkg -Source
-~/nuget``)
+- NuGet Package: ``ppy.osu.Game``
+- NuGet Package: ``ppy.osu.Game.Rulesets.Osu``

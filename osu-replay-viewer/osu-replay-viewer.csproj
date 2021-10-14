@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -15,8 +15,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ppy.osu.Game" Version="0.0.0" />
-    <PackageReference Include="ppy.osu.Game.Rulesets.Osu" Version="1.0.0" />
+    <PackageReference Include="ppy.osu.Game" Version="2021.1006.1" />
+    <PackageReference Include="ppy.osu.Game.Rulesets.Osu" Version="2021.1006.1" />
   </ItemGroup>
 
 </Project>
