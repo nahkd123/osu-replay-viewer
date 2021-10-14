@@ -37,6 +37,7 @@ namespace osu_replay_renderer_netcore.CustomHosts
         private WaveFileWriter waveFileWriter;
         public void PrepareAudioDevices()
         {
+            if (OutputAudioToFile == null) return;
             fileStream = new FileStream(OutputAudioToFile, FileMode.CreateNew);
             waveFileWriter = new WaveFileWriter(fileStream, new WaveFormat(44100, 2));
 
