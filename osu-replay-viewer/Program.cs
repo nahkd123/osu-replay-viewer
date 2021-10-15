@@ -60,8 +60,13 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine("    --record-output <Path/To/File.mp4>     | -O <...>");
                 Console.WriteLine("    Set record output file path");
                 Console.WriteLine();
+                Console.WriteLine("    --mods-override <Mod1>[,<Mod2>,...]");
+                Console.WriteLine("    Override mods list (Mod acronyms only)");
+                Console.WriteLine();
                 return;
             }
+
+            string[] modsOverride = null;
 
             bool isHeadless = false;
             int headlessInput = -1, headlessOutput = -1;
@@ -85,6 +90,8 @@ namespace osu_replay_renderer_netcore
                 }
                 switch (args[i])
                 {
+                    case "--mods-override": modsOverride = args[i + 1].Split(","); i++; break;
+
                     case "--headless": isHeadless = true; break;
                     case "--headless-loopback":
                         headlessInput = int.Parse(args[i + 1]);
@@ -173,7 +180,10 @@ namespace osu_replay_renderer_netcore
             }
             else host = Host.GetSuitableHost("osu", false);
 
-            var game = new OsuGameRecorder(programArgs);
+            var game = new OsuGameRecorder(programArgs)
+            {
+                ModsOverride = modsOverride
+            };
             host.Run(game);
             host.Dispose();
         }

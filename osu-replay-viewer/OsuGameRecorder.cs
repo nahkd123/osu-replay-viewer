@@ -1,4 +1,5 @@
 ﻿using AutoMapper.Internal;
+using Microsoft.EntityFrameworkCore.Internal;
 using osu.Framework.Allocation;
 using osu.Framework.Audio.Mixing;
 using osu.Framework.Configuration;
@@ -23,6 +24,7 @@ using osu.Game.Screens.Ranking;
 using osu.Game.Screens.Ranking.Statistics;
 using osu_replay_renderer_netcore.CustomHosts;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -32,6 +34,8 @@ namespace osu_replay_renderer_netcore
 {
     class OsuGameRecorder : OsuGameBase
     {
+        public string[] ModsOverride { get; set; } = null;
+
         RecorderScreenStack ScreenStack;
         RecorderReplayPlayer Player;
 
@@ -164,6 +168,16 @@ namespace osu_replay_renderer_netcore
                     GracefullyExit();
                 }
 
+                if (ModsOverride != null)
+                {
+                    Console.WriteLine("Mods override");
+                    List<Mod> mods = new();
+                    foreach (var mod in ruleset.AllMods)
+                    {
+                        if (mod is Mod mm && ModsOverride.Any(v => v == mod.Acronym)) mods.Add(mm);
+                    }
+                    score.ScoreInfo.Mods = mods.ToArray();
+                }
                 LoadViewer(score, ruleset);
             }
             else
