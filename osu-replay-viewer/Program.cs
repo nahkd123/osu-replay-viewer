@@ -30,6 +30,9 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine("    replay view file:<Replay.osr>");
                 Console.WriteLine("    Open Replay viewer with score from file");
                 Console.WriteLine();
+                Console.WriteLine("    replay view auto:<Online Beatmap ID>");
+                Console.WriteLine("    Open Replay viewer with autoplay");
+                Console.WriteLine();
                 Console.WriteLine("    replay list");
                 Console.WriteLine("    View all downloaded scores. You might want to redirect outputs to file. Eg: program.dll list > scores.txt");
                 Console.WriteLine();

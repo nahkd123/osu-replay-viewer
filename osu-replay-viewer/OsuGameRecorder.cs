@@ -135,6 +135,23 @@ namespace osu_replay_renderer_netcore
                         }
                     }
                 }
+                else if (scoreId.StartsWith("auto:"))
+                {
+                    var beatmapId = int.Parse(scoreId.Substring(5));
+                    var beatmapInfo = BeatmapManager.QueryBeatmap(v => v.OnlineBeatmapID == beatmapId);
+                    if (beatmapInfo == null)
+                    {
+                        Console.Error.WriteLine("Beatmap not found: " + beatmapId);
+                        GracefullyExit();
+                        return;
+                    }
+
+                    var working = BeatmapManager.GetWorkingBeatmap(beatmapInfo);
+                    var beatmap = working.GetPlayableBeatmap(ruleset.RulesetInfo, new[] { ruleset.GetAutoplayMod() });
+                    score = ruleset.GetAutoplayMod().CreateReplayScore(beatmap, new[] { ruleset.GetAutoplayMod() });
+                    score.ScoreInfo.BeatmapInfoID = beatmapInfo.ID;
+                    score.ScoreInfo.Mods = new[] { ruleset.GetAutoplayMod() };
+                }
                 else
                 {
                     int localId = int.Parse(scoreId);
