@@ -63,9 +63,13 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine("    --mods-override <Mod1>[,<Mod2>,...]");
                 Console.WriteLine("    Override mods list (Mod acronyms only)");
                 Console.WriteLine();
+                Console.WriteLine("    --yes                                  | -Y");
+                Console.WriteLine("    Always answer yes to any prompts");
+                Console.WriteLine();
                 return;
             }
 
+            bool yesFlag = false;
             string[] modsOverride = null;
 
             bool isHeadless = false;
@@ -140,6 +144,9 @@ namespace osu_replay_renderer_netcore
 
                     case "--record-output":
                     case "-O": recordOutput = args[i + 1]; i++; break;
+
+                    case "--yes":
+                    case "-Y": yesFlag = true; break;
                     default: break;
                 }
             }
@@ -148,22 +155,23 @@ namespace osu_replay_renderer_netcore
             DesktopGameHost host;
 
             // In the future we'll use something that's cross-platform
-            if (isHeadless) host = new WindowsHeadlessGameHost("osu", false, true)
+            if (isHeadless)
             {
-                OutputAudioToFile = headlessOutputFile,
-                AudioInputDevice = headlessInput,
-                AudioOutputDevice = headlessOutput
-            };
+                if (headlessOutputFile != null) if (!AskFileDelete(yesFlag, headlessOutputFile)) return;
+
+                host = new WindowsHeadlessGameHost("osu", false, true)
+                {
+                    OutputAudioToFile = headlessOutputFile,
+                    AudioInputDevice = headlessInput,
+                    AudioOutputDevice = headlessOutput
+                };
+            }
             else if (isRecord)
             {
+                if (!AskFileDelete(yesFlag, recordOutput)) return;
+
                 var host2 = new WindowsRecordGameHost("osu", recordFPS * Math.Max(recordFramesBlending, 1));
                 host2.Resolution = recordResolution;
-                if (File.Exists(recordOutput))
-                {
-                    Console.Error.WriteLine("Unable to start record platform host: File already exists: " + recordOutput);
-                    Console.Error.WriteLine("Either delete or rename it");
-                    return;
-                }
                 host2.Encoder = new CustomHosts.Record.ExternalFFmpegEncoder()
                 {
                     FPS = recordFPS,
@@ -186,6 +194,31 @@ namespace osu_replay_renderer_netcore
             };
             host.Run(game);
             host.Dispose();
+        }
+
+        static bool AskFileDelete(bool yesFlag, string file)
+        {
+            if (File.Exists(file))
+            {
+                Console.WriteLine("Warning: \"" + file + "\" already exists!");
+                if (AskYNQuestion(yesFlag, "Do you want to delete this file?"))
+                {
+                    File.Delete(file);
+                    Console.WriteLine("Success: \"" + file + "\" has been deleted!");
+                }
+                else return false;
+            }
+            return true;
+        }
+    
+        static bool AskYNQuestion(bool yesFlag, string question)
+        {
+            if (yesFlag) return true;
+            Console.WriteLine(question + " [Y/n]?");
+            var key = Console.ReadKey(false);
+            if (key.Key == ConsoleKey.Y) return true;
+            Console.WriteLine("'No' option selected!");
+            return false;
         }
     }
 }
