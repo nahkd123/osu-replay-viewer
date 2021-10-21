@@ -58,10 +58,9 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine();
                 foreach (ScoreInfo info in ScoreManager.QueryScores(info => true))
                 {
-                    // Filter osu! ruleset scores
-                    // if (info.Ruleset.ID != ruleset.RulesetInfo.ID) continue;
-
                     long scoreId = info.OnlineScoreID ?? -1;
+
+                    string onlineScoreID = scoreId == -1 ? "" : $" (Online Score ID: #{scoreId})";
                     string mods = "(no mod)";
                     if (info.Mods.Length > 0)
                     {
@@ -69,9 +68,8 @@ namespace osu_replay_renderer_netcore
                         foreach (var mod in info.Mods) mods += (mods.Length > 0 ? ", " : "") + mod.Name;
                     }
 
-                    Console.WriteLine("#" + info.ID + ": " + info.BeatmapInfo.GetDisplayTitle() + " (Ruleset: " + info.Ruleset.Name + ")");
-                    Console.WriteLine("Played by " + info.UserString + " (Online Score ID: #" + (scoreId == -1? "n/a" : scoreId) + ")");
-                    Console.WriteLine("Ranked Score: " + NumberFormatter.PrintWithSiSuffix(info.TotalScore) + " - Mods: " + mods);
+                    Console.WriteLine($"#{info.ID}: {info.BeatmapInfo.GetDisplayTitle()}");
+                    Console.WriteLine($"{info.Ruleset.Name} | Played by {info.UserString}{onlineScoreID} | Ranked Score: {NumberFormatter.PrintWithSiSuffix(info.TotalScore)} | Mods: {mods}");
                     Console.WriteLine();
                 }
                 Console.WriteLine("--------------------");
