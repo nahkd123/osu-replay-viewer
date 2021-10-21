@@ -24,25 +24,38 @@ namespace osu_replay_renderer_netcore
 
             (MetadataInfo.Children[0] as FillFlowContainer).RemoveRecursive(v => v is LoadingLayer);
             var mapMetadata = (MetadataInfo.Children[0] as FillFlowContainer).Children[5] as GridContainer;
+            mapMetadata.RowDimensions = new[]
+            {
+                new Dimension(GridSizeMode.AutoSize),
+                new Dimension(GridSizeMode.AutoSize),
+                new Dimension(GridSizeMode.AutoSize),
+                new Dimension()
+            };
             mapMetadata.Content = new[]
             {
                 mapMetadata.Content[0].ToArray(),
                 mapMetadata.Content[1].ToArray(),
-                new Drawable[]
+                CreateNewRulesetMetadata("Played by", player.GivenScore.ScoreInfo.UserString),
+                CreateNewRulesetMetadata("Ruleset", player.GivenScore.ScoreInfo.Ruleset.Name)
+            };
+        }
+
+        private Drawable[] CreateNewRulesetMetadata(string c1, string c2)
+        {
+            return new Drawable[]
+            {
+                new OsuSpriteText
                 {
-                    new OsuSpriteText
-                    {
-                        Anchor = Anchor.TopRight,
-                        Origin = Anchor.TopRight,
-                        Margin = new MarginPadding { Right = 5 },
-                        Colour = OsuColour.Gray(0.8f),
-                        Text = "Played by"
-                    },
-                    new OsuSpriteText
-                    {
-                        Margin = new MarginPadding { Left = 5 },
-                        Text = player.GivenScore.ScoreInfo.UserString
-                    }
+                    Anchor = Anchor.TopRight,
+                    Origin = Anchor.TopRight,
+                    Margin = new MarginPadding { Right = 5 },
+                    Colour = OsuColour.Gray(0.8f),
+                    Text = c1
+                },
+                new OsuSpriteText
+                {
+                    Margin = new MarginPadding { Left = 5 },
+                    Text = c2
                 }
             };
         }
