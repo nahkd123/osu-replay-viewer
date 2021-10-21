@@ -15,8 +15,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ppy.osu.Game" Version="2021.1006.1" />
-    <PackageReference Include="ppy.osu.Game.Rulesets.Osu" Version="2021.1006.1" />
+    <PackageReference Include="ppy.osu.Game" Version="2021.1016.0" />
+    <PackageReference Include="ppy.osu.Game.Rulesets.Osu" Version="2021.1016.0" />
   </ItemGroup>
 
 </Project>
