@@ -49,7 +49,6 @@ namespace osu_replay_renderer_netcore
         protected override void LoadComplete()
         {
             string subcommand = ProgramArguments[0].ToLower();
-            Ruleset ruleset = new OsuRuleset().RulesetInfo.CreateInstance();
 
             if (subcommand.Equals("list"))
             {
@@ -60,7 +59,7 @@ namespace osu_replay_renderer_netcore
                 foreach (ScoreInfo info in ScoreManager.QueryScores(info => true))
                 {
                     // Filter osu! ruleset scores
-                    if (info.Ruleset.ID != ruleset.RulesetInfo.ID) continue;
+                    // if (info.Ruleset.ID != ruleset.RulesetInfo.ID) continue;
 
                     long scoreId = info.OnlineScoreID ?? -1;
                     string mods = "(no mod)";
@@ -78,33 +77,6 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine("--------------------");
                 Console.WriteLine();
                 GracefullyExit();
-            }
-            else if (subcommand.Equals("download"))
-            {
-                Console.WriteLine("Downloading " + ProgramArguments[1] + "...");
-                var model = new ScoreInfo()
-                {
-                    OnlineScoreID = long.Parse(ProgramArguments[1]),
-                    Ruleset = ruleset.RulesetInfo
-                };
-
-                ScoreManager.Download(model, false);
-                var obj = ScoreManager.GetExistingDownload(model);
-                obj.DownloadProgressed += progress =>
-                {
-                    Console.WriteLine("Progress: " + (int)(progress * 100.0) + "%");
-                    if (progress >= 1.0) Console.WriteLine("Importing...");
-                };
-                obj.Success += success =>
-                {
-                    Console.WriteLine("Replay downloaded: " + success);
-                    GracefullyExit();
-                };
-                obj.Failure += fail =>
-                {
-                    Console.WriteLine("Replay download failed");
-                    throw fail;
-                };
             }
             else if (subcommand.Equals("view"))
             {
@@ -141,6 +113,8 @@ namespace osu_replay_renderer_netcore
                 }
                 else if (scoreId.StartsWith("auto:"))
                 {
+                    var ruleset = new OsuRuleset();
+
                     var beatmapId = int.Parse(scoreId.Substring(5));
                     var beatmapInfo = BeatmapManager.QueryBeatmap(v => v.OnlineBeatmapID == beatmapId);
                     if (beatmapInfo == null)
@@ -155,6 +129,7 @@ namespace osu_replay_renderer_netcore
                     score = ruleset.GetAutoplayMod().CreateReplayScore(beatmap, new[] { ruleset.GetAutoplayMod() });
                     score.ScoreInfo.BeatmapInfoID = beatmapInfo.ID;
                     score.ScoreInfo.Mods = new[] { ruleset.GetAutoplayMod() };
+                    score.ScoreInfo.Ruleset = ruleset.RulesetInfo;
                 }
                 else
                 {
@@ -172,13 +147,13 @@ namespace osu_replay_renderer_netcore
                 {
                     Console.WriteLine("Mods override");
                     List<Mod> mods = new();
-                    foreach (var mod in ruleset.AllMods)
+                    foreach (var mod in score.ScoreInfo.Ruleset.CreateInstance().AllMods)
                     {
                         if (mod is Mod mm && ModsOverride.Any(v => v == mod.Acronym)) mods.Add(mm);
                     }
                     score.ScoreInfo.Mods = mods.ToArray();
                 }
-                LoadViewer(score, ruleset);
+                LoadViewer(score);
             }
             else
             {
@@ -194,7 +169,7 @@ namespace osu_replay_renderer_netcore
         [Resolved]
         private FrameworkConfigManager config { get; set; }
 
-        private void LoadViewer(Score score, Ruleset ruleset)
+        private void LoadViewer(Score score)
         {
             // Apply some stuffs
             config.SetValue(FrameworkSetting.ConfineMouseMode, ConfineMouseMode.Never);
@@ -207,7 +182,7 @@ namespace osu_replay_renderer_netcore
             LoadComponent(ScreenStack);
             Add(ScreenStack);
 
-            var rulesetInfo = ruleset.RulesetInfo;
+            var rulesetInfo = score.ScoreInfo.Ruleset;
             Ruleset.Value = rulesetInfo;
 
             var working = BeatmapManager.GetWorkingBeatmap(BeatmapManager.QueryBeatmap(beatmap => score.ScoreInfo.BeatmapInfoID == beatmap.ID));
