@@ -1,4 +1,5 @@
 ﻿using AutoMapper.Internal;
+using MessagePack.Formatters;
 using Microsoft.EntityFrameworkCore.Internal;
 using osu.Framework.Allocation;
 using osu.Framework.Audio.Mixing;
@@ -9,7 +10,6 @@ using osu.Framework.Platform;
 using osu.Framework.Screens;
 using osu.Framework.Threading;
 using osu.Framework.Timing;
-using osu.Framework.Utils;
 using osu.Game;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics.Containers;
@@ -68,8 +68,8 @@ namespace osu_replay_renderer_netcore
                         foreach (var mod in info.Mods) mods += (mods.Length > 0 ? ", " : "") + mod.Name;
                     }
 
-                    Console.WriteLine($"#{info.ID}: {info.BeatmapInfo.GetDisplayTitle()}");
-                    Console.WriteLine($"{info.Ruleset.Name} | Played by {info.UserString}{onlineScoreID} | Ranked Score: {NumberFormatter.PrintWithSiSuffix(info.TotalScore)} | Mods: {mods}");
+                    Console.WriteLine($"#{info.ID}: {info.BeatmapInfo.GetDisplayTitle()} | {info.BeatmapInfo.StarDifficulty:F1}*");
+                    Console.WriteLine($"{info.Ruleset.Name} | Played by {info.UserString}{onlineScoreID} | Ranked Score: {info.TotalScore:N0} ({info.DisplayAccuracy} {RankToActualRank(info.Rank)}) | Mods: {mods}");
                     Console.WriteLine();
                 }
                 Console.WriteLine("--------------------");
@@ -317,6 +317,18 @@ namespace osu_replay_renderer_netcore
             public bool IsRunning => wrap.IsRunning;
 
             public void ProcessFrame() { wrap.ProcessFrame(); }
+        }
+
+        private static string RankToActualRank(ScoreRank rank)
+        {
+            return rank switch
+            {
+                ScoreRank.D or ScoreRank.C or ScoreRank.B or ScoreRank.A or ScoreRank.S => rank.ToString(),
+                ScoreRank.SH => "S+",
+                ScoreRank.X => "SS",
+                ScoreRank.XH => "SS+",
+                _ => "n/a",
+            };
         }
     }
 }
