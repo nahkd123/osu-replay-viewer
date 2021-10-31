@@ -1,7 +1,7 @@
 # osu! Replay Viewer
 _Based on osu!lazer_
 
-This replay viewer allow you to view imported replays (yes you have to import them in osu!lazer
+This replay viewer allow you to view imported replays (yes you have to import **beatmaps & replays (skins are not supported now)** in osu!lazer
 client) without launching the actual game, and you can also render replays to video files, thanks
 to FFmpeg.
 
