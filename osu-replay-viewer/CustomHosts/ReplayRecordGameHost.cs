@@ -28,9 +28,10 @@ namespace osu_replay_renderer_netcore.CustomHosts
     /// will be changed in the future (maybe we'll hide it, or maybe we'll implement entire
     /// fake window from scratch to make it render offscreen)
     /// </summary>
-    public class WindowsRecordGameHost : DesktopGameHost
+    public class ReplayRecordGameHost : DesktopGameHost
     {
-        public override IEnumerable<string> UserStoragePaths => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).Yield();
+        // public override IEnumerable<string> UserStoragePaths => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).Yield();
+        public override IEnumerable<string> UserStoragePaths => CrossPlatform.GetUserStoragePaths();
 
         public override void OpenFileExternally(string filename) => Logger.Log($"Application has requested file \"{filename}\" to be opened.");
         public override void OpenUrlExternally(string url) => Logger.Log($"Application has requested URL \"{url}\" to be opened.");
@@ -44,7 +45,7 @@ namespace osu_replay_renderer_netcore.CustomHosts
         public ExternalFFmpegEncoder Encoder { get; set; }
         public bool UsingEncoder { get; set; } = true;
 
-        public WindowsRecordGameHost(string gameName = null, int frameRate = 60) : base(gameName, false)
+        public ReplayRecordGameHost(string gameName = null, int frameRate = 60) : base(gameName, false)
         {
             recordClock = new RecordClock(frameRate);
         }

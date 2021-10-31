@@ -159,7 +159,7 @@ namespace osu_replay_renderer_netcore
             {
                 if (headlessOutputFile != null) if (!AskFileDelete(yesFlag, headlessOutputFile)) return;
 
-                host = new WindowsHeadlessGameHost("osu", false, true)
+                host = new ReplayHeadlessGameHost("osu", false, true)
                 {
                     OutputAudioToFile = headlessOutputFile,
                     AudioInputDevice = headlessInput,
@@ -170,7 +170,7 @@ namespace osu_replay_renderer_netcore
             {
                 if (!AskFileDelete(yesFlag, recordOutput)) return;
 
-                var host2 = new WindowsRecordGameHost("osu", recordFPS * Math.Max(recordFramesBlending, 1));
+                var host2 = new ReplayRecordGameHost("osu", recordFPS * Math.Max(recordFramesBlending, 1));
                 host2.Resolution = recordResolution;
                 host2.Encoder = new CustomHosts.Record.ExternalFFmpegEncoder()
                 {

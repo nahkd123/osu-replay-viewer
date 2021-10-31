@@ -171,7 +171,7 @@ namespace osu_replay_renderer_netcore
         {
             // Apply some stuffs
             config.SetValue(FrameworkSetting.ConfineMouseMode, ConfineMouseMode.Never);
-            if (!(Host is WindowsRecordGameHost)) config.SetValue(FrameworkSetting.FrameSync, FrameSync.VSync);
+            if (!(Host is ReplayRecordGameHost)) config.SetValue(FrameworkSetting.FrameSync, FrameSync.VSync);
             Audio.Balance.Value = 0;
             Audio.TrackMixer.Balance.Value = 0;
             Audio.SampleMixer.Balance.Value = 0;
@@ -209,7 +209,7 @@ namespace osu_replay_renderer_netcore
                 var getHandle = BassAudioMixer.GetDeclaredMethod("get_Handle");
                 int trackHandle = (int)getHandle.Invoke(Audio.TrackMixer, null);
                 int sampleHandle = (int)getHandle.Invoke(Audio.SampleMixer, null);*/
-                if (headless is WindowsHeadlessGameHost wrv)
+                if (headless is ReplayHeadlessGameHost wrv)
                 {
                     /*wrv.TrackMixerHandle = trackHandle;
                     wrv.SampleMixerHandle = sampleHandle;*/
@@ -248,16 +248,16 @@ namespace osu_replay_renderer_netcore
                         statisticsPanel.ToggleVisibility();
                     }, 2500);
                     
-                    if (Host is WindowsRecordGameHost || Host is HeadlessGameHost)
+                    if (Host is ReplayRecordGameHost || Host is HeadlessGameHost)
                     {
                         Scheduler.AddDelayed(() =>
                         {
-                            if (Host is WindowsRecordGameHost recordHost) recordHost.UsingEncoder = false;
-                            if (Host is WindowsHeadlessGameHost headlessHost && headlessHost.OutputAudioToFile != null) headlessHost.UsingAudioRecorder = false;
+                            if (Host is ReplayRecordGameHost recordHost) recordHost.UsingEncoder = false;
+                            if (Host is ReplayHeadlessGameHost headlessHost && headlessHost.OutputAudioToFile != null) headlessHost.UsingAudioRecorder = false;
                         }, 10000);
                         Scheduler.AddDelayed(() =>
                         {
-                            if (Host is WindowsRecordGameHost recordHost)
+                            if (Host is ReplayRecordGameHost recordHost)
                             {
                                 recordHost.Encoder.FFmpeg.StandardInput.Close();
                                 recordHost.Encoder = null;
@@ -267,7 +267,7 @@ namespace osu_replay_renderer_netcore
                     }
                 };
             }
-            if (newScreen is RecorderReplayPlayer player && Host is WindowsRecordGameHost)
+            if (newScreen is RecorderReplayPlayer player && Host is ReplayRecordGameHost)
             {
                 player.ManipulateClock = true;
 
