@@ -105,6 +105,7 @@ namespace osu_replay_renderer_netcore
                         catch (LegacyScoreDecoder.BeatmapNotFoundException e)
                         {
                             Console.Error.WriteLine("Beatmap not found while opening replay: " + e.Message);
+                            Console.Error.WriteLine("Please make sure the beatmap is imported in your osu!lazer installation");
                             score = null;
                         }
                     }
@@ -118,6 +119,7 @@ namespace osu_replay_renderer_netcore
                     if (beatmapInfo == null)
                     {
                         Console.Error.WriteLine("Beatmap not found: " + beatmapId);
+                        Console.Error.WriteLine("Please make sure the beatmap is imported in your osu!lazer installation");
                         GracefullyExit();
                         return;
                     }
@@ -138,6 +140,8 @@ namespace osu_replay_renderer_netcore
                 if (score == null)
                 {
                     Console.Error.WriteLine("Unable to open " + scoreId + ": Score not found in osu!lazer installation");
+                    Console.Error.WriteLine("Please make sure the score is imported in your osu!lazer installation");
+                    Console.Error.WriteLine("You can also view replay from .osr file: 'file:MyReplay.osr'");
                     GracefullyExit();
                 }
 
@@ -155,11 +159,7 @@ namespace osu_replay_renderer_netcore
             }
             else
             {
-                Console.Error.WriteLine(" !! ");
-                Console.Error.WriteLine(" !! ");
                 Console.Error.WriteLine(" !! Unknown subcommand: " + subcommand);
-                Console.Error.WriteLine(" !! ");
-                Console.Error.WriteLine(" !! ");
                 GracefullyExit();
             }
         }

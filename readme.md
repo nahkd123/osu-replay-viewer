@@ -12,6 +12,13 @@ to upgrade to make UI matches with actual game;
 > This project somewhat implemented [this](https://github.com/ppy/osu/discussions/12986) idea (except
   we're running outside the official client)
 
+## Online score ID and local score ID
+Almost everyone are confused on score ID that this replay viewer is referring to. There're 2 different
+types of score ID: Online and Local
+
+If you supply the score ID to command-line arguments without ``online:`` prefix, you're using local
+score ID.
+
 ## Features
 - View downloaded replays
 - Download replays (if you can log in)
@@ -69,3 +76,7 @@ To build this project, you need:
 - .NET 5.0 SDK
 - NuGet Package: ``ppy.osu.Game``
 - NuGet Package: ``ppy.osu.Game.Rulesets.Osu``
+
+## Troubleshooting
+### "No corresponding beatmap for the score could be found"
+You need to import the beatmap to your current osu!lazer installation (works best with ranked maps).
