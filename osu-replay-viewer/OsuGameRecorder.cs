@@ -87,7 +87,7 @@ namespace osu_replay_renderer_netcore
                 }
                 else if (scoreId.StartsWith("file:"))
                 {
-                    string filePath = scoreId.Substring(5);
+                    string filePath = ProgramArguments[1].Substring(5);
                     if (!File.Exists(filePath))
                     {
                         Console.Error.WriteLine("Score not found: " + filePath);
