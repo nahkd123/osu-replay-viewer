@@ -138,8 +138,11 @@ Usage:
 To build this project, you need:
 
 - .NET 5.0 SDK
-- NuGet Package: ``ppy.osu.Game``
-- NuGet Package: ``ppy.osu.Game.Rulesets.Osu``
+- Git
+
+Clone this repository (``git clone``), then build it with ``dotnet build`` command.
+
+You can also build and run directly, using ``dotnet run osu-replay-viewer``
 
 ## Troubleshooting
 ### "No corresponding beatmap for the score could be found"
@@ -166,3 +169,14 @@ Here is the table for hardware encoders:
 | Intel  | hevc_qsv   | HEVC  |          |
 | AMD    | hevc_amf   | HEVC  |          |
 | NVIDIA | hevc_nvenc | HEVC  |          |
+
+## Planned
+This is the list of stuffs that I want to changes. It can be planned features or just revamp the code.
+
+- Live Graphs (Live PP, accuracy or difficulty)
+- Custom HUD from DLLs (similar to osu! custom rulesets)
+- Customiztation
+- Split CLI system to seperate project (if you're willing to use it)
+- Change the project name
+
+> While Live PP Graph is currently possible, it would be nice if someone exposes them as bindables.
