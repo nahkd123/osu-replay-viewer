@@ -1,8 +1,6 @@
 ﻿using AutoMapper.Internal;
-using MessagePack.Formatters;
 using Microsoft.EntityFrameworkCore.Internal;
 using osu.Framework.Allocation;
-using osu.Framework.Audio.Mixing;
 using osu.Framework.Configuration;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input;
@@ -14,7 +12,6 @@ using osu.Game;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Cursor;
-using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Osu;
 using osu.Game.Scoring;
@@ -28,36 +25,53 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace osu_replay_renderer_netcore
 {
     class OsuGameRecorder : OsuGameBase
     {
-        public string[] ModsOverride { get; set; } = null;
+        public List<string> ModsOverride = new();
 
         RecorderScreenStack ScreenStack;
         RecorderReplayPlayer Player;
 
-        private string[] ProgramArguments;
+        public bool ListReplays = false;
+        public string ListQuery = null;
 
-        public OsuGameRecorder(string[] args)
-        {
-            ProgramArguments = args;
-        }
+        public string ReplayViewType;
+        public long ReplayOnlineScoreID;
+        public int ReplayOfflineScoreID;
+        public int ReplayAutoBeatmapID;
+        public string ReplayFileLocation;
+
+        public OsuGameRecorder()
+        {}
 
         protected override void LoadComplete()
         {
-            string subcommand = ProgramArguments[0].ToLower();
-
-            if (subcommand.Equals("list"))
+            if (ListReplays)
             {
                 Console.WriteLine();
                 Console.WriteLine("--------------------");
                 Console.WriteLine("Listing all downloaded scores:");
+                if (ListQuery != null) Console.WriteLine($"(Query = '{ListQuery}')");
                 Console.WriteLine();
+
+                /*foreach (ScoreInfo info in ScoreManager.QueryScores(info =>
+                    ListQuery == null ||
+                    info.UserString.IndexOf(ListQuery) >= 0 ||
+                    info.BeatmapInfo.GetDisplayTitle().IndexOf(ListQuery) >= 0
+                ))*/
                 foreach (ScoreInfo info in ScoreManager.QueryScores(info => true))
                 {
+                    if (!(
+                        ListQuery != null &&
+                        (
+                            info.BeatmapInfo.GetDisplayTitle().Equals(ListQuery, StringComparison.OrdinalIgnoreCase) ||
+                            info.UserString.Equals(ListQuery, StringComparison.OrdinalIgnoreCase)
+                        )
+                    )) continue;
+
                     long scoreId = info.OnlineScoreID ?? -1;
 
                     string onlineScoreID = scoreId == -1 ? "" : $" (Online Score ID: #{scoreId})";
@@ -75,27 +89,37 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine("--------------------");
                 Console.WriteLine();
                 GracefullyExit();
+                return;
             }
-            else if (subcommand.Equals("view"))
+            
+            Score score;
+            switch (ReplayViewType)
             {
-                string scoreId = ProgramArguments[1].ToLower();
-                Score score;
-                if (scoreId.StartsWith("online:"))
-                {
-                    long onlineId = long.Parse(scoreId.Substring(7));
-                    score = ScoreManager.GetScore(ScoreManager.QueryScores(v => v.OnlineScoreID == onlineId).First());
-                }
-                else if (scoreId.StartsWith("file:"))
-                {
-                    string filePath = ProgramArguments[1].Substring(5);
-                    if (!File.Exists(filePath))
+                case "local": score = ScoreManager.GetScore(ScoreManager.QueryScores(v => v.ID == ReplayOfflineScoreID).First()); break;
+                case "online": score = ScoreManager.GetScore(ScoreManager.QueryScores(v => v.OnlineScoreID == ReplayOnlineScoreID).First()); break;
+                case "auto":
+                    var ruleset = new OsuRuleset();
+
+                    var beatmapInfo = BeatmapManager.QueryBeatmap(v => v.OnlineBeatmapID == ReplayAutoBeatmapID);
+                    if (beatmapInfo == null)
                     {
-                        Console.Error.WriteLine("Score not found: " + filePath);
+                        Console.Error.WriteLine("Beatmap not found: " + ReplayAutoBeatmapID);
+                        Console.Error.WriteLine("Please make sure the beatmap is imported in your osu!lazer installation");
                         GracefullyExit();
                         return;
                     }
 
-                    using (FileStream stream = new(filePath, FileMode.Open)) {
+                    var working = BeatmapManager.GetWorkingBeatmap(beatmapInfo);
+                    var beatmap = working.GetPlayableBeatmap(ruleset.RulesetInfo, new[] { ruleset.GetAutoplayMod() });
+                    score = ruleset.GetAutoplayMod().CreateReplayScore(beatmap, new[] { ruleset.GetAutoplayMod() });
+                    score.ScoreInfo.BeatmapInfoID = beatmapInfo.ID;
+                    score.ScoreInfo.Mods = new[] { ruleset.GetAutoplayMod() };
+                    score.ScoreInfo.Ruleset = ruleset.RulesetInfo;
+                    break;
+                case "file":
+                    // ReplayFileLocation is already checked at CLI stage
+                    using (FileStream stream = new(ReplayFileLocation, FileMode.Open))
+                    {
                         var decoder = new DatabasedLegacyScoreDecoder(RulesetStore, BeatmapManager);
                         try
                         {
@@ -109,59 +133,28 @@ namespace osu_replay_renderer_netcore
                             score = null;
                         }
                     }
-                }
-                else if (scoreId.StartsWith("auto:"))
-                {
-                    var ruleset = new OsuRuleset();
-
-                    var beatmapId = int.Parse(scoreId.Substring(5));
-                    var beatmapInfo = BeatmapManager.QueryBeatmap(v => v.OnlineBeatmapID == beatmapId);
-                    if (beatmapInfo == null)
-                    {
-                        Console.Error.WriteLine("Beatmap not found: " + beatmapId);
-                        Console.Error.WriteLine("Please make sure the beatmap is imported in your osu!lazer installation");
-                        GracefullyExit();
-                        return;
-                    }
-
-                    var working = BeatmapManager.GetWorkingBeatmap(beatmapInfo);
-                    var beatmap = working.GetPlayableBeatmap(ruleset.RulesetInfo, new[] { ruleset.GetAutoplayMod() });
-                    score = ruleset.GetAutoplayMod().CreateReplayScore(beatmap, new[] { ruleset.GetAutoplayMod() });
-                    score.ScoreInfo.BeatmapInfoID = beatmapInfo.ID;
-                    score.ScoreInfo.Mods = new[] { ruleset.GetAutoplayMod() };
-                    score.ScoreInfo.Ruleset = ruleset.RulesetInfo;
-                }
-                else
-                {
-                    int localId = int.Parse(scoreId);
-                    score = ScoreManager.GetScore(ScoreManager.QueryScores(v => v.ID == localId).First());
-                }
-
-                if (score == null)
-                {
-                    Console.Error.WriteLine("Unable to open " + scoreId + ": Score not found in osu!lazer installation");
-                    Console.Error.WriteLine("Please make sure the score is imported in your osu!lazer installation");
-                    Console.Error.WriteLine("You can also view replay from .osr file: 'file:MyReplay.osr'");
-                    GracefullyExit();
-                }
-
-                if (ModsOverride != null)
-                {
-                    Console.WriteLine("Mods override");
-                    List<Mod> mods = new();
-                    foreach (var mod in score.ScoreInfo.Ruleset.CreateInstance().AllMods)
-                    {
-                        if (mod is Mod mm && ModsOverride.Any(v => v == mod.Acronym)) mods.Add(mm);
-                    }
-                    score.ScoreInfo.Mods = mods.ToArray();
-                }
-                LoadViewer(score);
+                    break;
+                default: throw new Exception($"Unknown type {ReplayViewType}");
             }
-            else
+
+            if (score == null)
             {
-                Console.Error.WriteLine(" !! Unknown subcommand: " + subcommand);
+                Console.Error.WriteLine("Unable to open: Score not found in osu!lazer installation");
+                Console.Error.WriteLine("Please make sure the score is imported in your osu!lazer installation");
                 GracefullyExit();
             }
+
+            if (ModsOverride.Count > 0)
+            {
+                List<Mod> mods = new();
+                foreach (var mod in score.ScoreInfo.Ruleset.CreateInstance().AllMods)
+                {
+                    if (mod is Mod mm && ModsOverride.Any(v => v.StartsWith("acronyms:") ? v[9..] == mod.Acronym : v == mod.Name)) mods.Add(mm);
+                }
+                score.ScoreInfo.Mods = mods.ToArray();
+            }
+
+            LoadViewer(score);
         }
 
         [Resolved]
