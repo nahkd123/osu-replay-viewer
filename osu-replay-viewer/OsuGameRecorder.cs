@@ -31,6 +31,7 @@ namespace osu_replay_renderer_netcore
     class OsuGameRecorder : OsuGameBase
     {
         public List<string> ModsOverride = new();
+        public List<string> ExperimentalFlags = new();
 
         RecorderScreenStack ScreenStack;
         RecorderReplayPlayer Player;
@@ -46,6 +47,8 @@ namespace osu_replay_renderer_netcore
 
         public OsuGameRecorder()
         {}
+
+        public WorkingBeatmap WorkingBeatmap { get => Beatmap.Value; }
 
         protected override void LoadComplete()
         {

@@ -39,6 +39,8 @@ namespace osu_replay_renderer_netcore
             OptionDescription ffmpegMotionInterpolation;
             OptionDescription ffmpegVideoEncoder;
 
+            OptionDescription experimental;
+
             CommandLineProcessor cli = new()
             {
                 Options = new[]
@@ -176,15 +178,23 @@ namespace osu_replay_renderer_netcore
                         SingleDash = new[] { "FENC" },
                         Parameters = new[] { "Encoder = libx264" },
                         ProcessedParameters = new[] { "libx264" }
+                    },
+
+                    // Misc
+                    experimental = new()
+                    {
+                        Name = "Experimental Toggle",
+                        Description = "Toggle experimental feature",
+                        DoubleDashes = new[] { "experimental" },
+                        SingleDash = new[] { "experimental" },
+                        Parameters = new[] { "Flag" }
                     }
                 }
             };
 
             var game = new OsuGameRecorder();
-            modOverride.OnOptions += (args) =>
-            {
-                game.ModsOverride.Add(args[0]);
-            };
+            modOverride.OnOptions += (args) => { game.ModsOverride.Add(args[0]); };
+            experimental.OnOptions += (args) => { game.ExperimentalFlags.Add(args[0]); };
             GameHost host;
 
             try
