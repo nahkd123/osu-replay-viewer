@@ -17,11 +17,6 @@ to upgrade to make UI matches with actual game
 - Download replays (if you can log in)
 - ~~Render replays to sequence of images~~ (it actually render replay to a video now)
 
-## To-dos
-- Record audio (seems impossible until osu!framework allow us to replace AudioThread)
-- Clean up messy code
-- Allow user to choose different osu!lazer application directory
-
 ## Requirements
 - [.NET 5.0](https://dotnet.microsoft.com/download/dotnet/5.0)
 - OpenGL ES 3.0 compatible device
@@ -178,5 +173,6 @@ This is the list of stuffs that I want to changes. It can be planned features or
 - Customiztation
 - Split CLI system to seperate project (if you're willing to use it)
 - Change the project name
+- Allow user to choose different osu!lazer application directory
 
 > While Live PP Graph is currently possible, it would be nice if someone exposes them as bindables.
