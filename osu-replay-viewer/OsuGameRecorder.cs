@@ -65,7 +65,7 @@ namespace osu_replay_renderer_netcore
                 foreach (ScoreInfo info in ScoreManager.QueryScores(info => true))
                 {
                     if (!(
-                        ListQuery != null &&
+                        ListQuery == null ||
                         (
                             info.BeatmapInfo.GetDisplayTitle().Equals(ListQuery, StringComparison.OrdinalIgnoreCase) ||
                             info.UserString.Equals(ListQuery, StringComparison.OrdinalIgnoreCase)
