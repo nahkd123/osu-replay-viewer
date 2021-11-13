@@ -6,6 +6,7 @@ using osu.Framework.Timing;
 using osu.Game.Screens.Play;
 using osu_replay_renderer_netcore.CLI;
 using osu_replay_renderer_netcore.CustomHosts;
+using osu_replay_renderer_netcore.Patching;
 using Sentry;
 using System;
 using System.Collections.Generic;
@@ -191,6 +192,10 @@ namespace osu_replay_renderer_netcore
                     }
                 }
             };
+
+            // Apply patches
+            // We only want to apply audio-related patches for record mode
+            AudioPatcher.DoPatching();
 
             var game = new OsuGameRecorder();
             modOverride.OnOptions += (args) => { game.ModsOverride.Add(args[0]); };
