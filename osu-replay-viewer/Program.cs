@@ -41,6 +41,7 @@ namespace osu_replay_renderer_netcore
             OptionDescription ffmpegVideoEncoder;
 
             OptionDescription experimental;
+            OptionDescription test;
 
             CommandLineProcessor cli = new()
             {
@@ -189,6 +190,13 @@ namespace osu_replay_renderer_netcore
                         DoubleDashes = new[] { "experimental" },
                         SingleDash = new[] { "experimental" },
                         Parameters = new[] { "Flag" }
+                    },
+                    test = new()
+                    {
+                        Name = "Test Mode",
+                        Description = "Test various stuffs (offline audio mixing for now)",
+                        DoubleDashes = new[] { "test" },
+                        Parameters = new[] { "Test Type (see SimpleTest.cs)" }
                     }
                 }
             };
@@ -200,11 +208,13 @@ namespace osu_replay_renderer_netcore
             var game = new OsuGameRecorder();
             modOverride.OnOptions += (args) => { game.ModsOverride.Add(args[0]); };
             experimental.OnOptions += (args) => { game.ExperimentalFlags.Add(args[0]); };
+            test.OnOptions += (args) => { SimpleTest.ExecuteTest(args[0]); };
             GameHost host;
 
             try
             {
                 var progParams = cli.ProcessOptionsAndFilter(args);
+                if (test.Triggered) return;
                 if (args.Length == 0 || generalHelp.Triggered)
                 {
                     Console.WriteLine("Usage:");
