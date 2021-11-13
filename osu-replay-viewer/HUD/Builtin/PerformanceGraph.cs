@@ -4,14 +4,9 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Lines;
 using osu.Framework.Graphics.Shapes;
 using osu.Game.Graphics;
-using osu.Game.Graphics.Sprites;
 using osuTK;
 using osuTK.Graphics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace osu_replay_renderer_netcore.HUD.Builtin
 {
@@ -23,19 +18,48 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
     /// </summary>
     public class PerformanceGraph : BoxOverlay
     {
-        private const int NUM_OF_VERTICES = 1000;
+        private const int NUM_OF_SEGMENTS = 1000;
         private const double MS_PER_SEGMENT = 1;
+
+        public double[] Segments;
         public Vector2[] Vertices;
         public Path Path2D;
 
         public Bindable<double> PP = new BindableDouble(0);
+        public double Minimum = 0, Maximum = 10;
+
+        public GraphDisplay DisplayMode { get; set; } = GraphDisplay.SCALED_WINDOWED;
+        public double CurrentRange { get => Maximum - Minimum; }
+        public double WindowScale { get; set; } = 50;
+
+        public double WindowMinimum
+        {
+            get => DisplayMode switch
+            {
+                GraphDisplay.SCALED_FULL_RANGE => Minimum,
+                GraphDisplay.SCALED_WINDOWED => PP.Value - WindowScale / 2.0,
+                _ => Minimum
+            };
+        }
+        public double WindowMaximum
+        {
+            get => DisplayMode switch
+            {
+                GraphDisplay.SCALED_FULL_RANGE => Maximum,
+                GraphDisplay.SCALED_WINDOWED => PP.Value + WindowScale / 2.0,
+                _ => Maximum
+            };
+        }
+        public double WindowRange { get => WindowMaximum - WindowMinimum; }
 
         public PerformanceGraph() : base("Performance Graph")
         {
             var bgColour = new Color4(0f, 0f, 0f, 0.6f);
-            Vertices = new Vector2[NUM_OF_VERTICES];
+            Vertices = new Vector2[NUM_OF_SEGMENTS];
+            Segments = new double[NUM_OF_SEGMENTS];
 
-            Add(new Container
+            Container graph;
+            Add(graph = new()
             {
                 RelativeSizeAxes = Axes.X,
                 AutoSizeAxes = Axes.Y,
@@ -45,9 +69,9 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
                     {
                         RelativeSizeAxes = Axes.X,
                         Height = 100,
-                        Colour = bgColour
+                        Colour = bgColour,
                     },
-                    Path2D = new Path
+                    Path2D = new SmoothPath
                     {
                         PathRadius = 1.2f,
                         Colour = OsuColour.Gray(1.0f),
@@ -69,23 +93,29 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
                     prevTime = currentTime;
                     return;
                 }
-                
-                while (segmentsUpdate > 0)
-                {
-                    segmentsUpdate--;
 
-                    // Shift
-                    for (int i = 0; i < NUM_OF_VERTICES; i++)
-                    {
-                        Vertices[i].X = i * DrawWidth / NUM_OF_VERTICES;
-                        if (i > 0) Vertices[i - 1].Y = Vertices[i].Y;
-                    }
-                    Vertices[NUM_OF_VERTICES - 1].Y = (float)PP.Value;
-                    Path2D.Vertices = Vertices;
+                float height = graph.DrawHeight - 4f;
+
+                // Shift
+                for (int i = 0; i < NUM_OF_SEGMENTS; i++)
+                {
+                    Segments[i] = i < (NUM_OF_SEGMENTS - segmentsUpdate) ? Segments[i + segmentsUpdate] : PP.Value;
+                    if (Segments[i] < Minimum) Minimum = Segments[i];
+                    if (Segments[i] > Maximum) Maximum = Segments[i];
                 }
+
+                // Display
+                for (int i = 0; i < NUM_OF_SEGMENTS; i++)
+                {
+                    Vertices[i].X = i * DrawWidth / NUM_OF_SEGMENTS;
+                    Vertices[i].Y = Math.Clamp(height - (float)((Segments[i] - WindowMinimum) / WindowRange) * height, 0, height + 2f);
+                }
+
+                Path2D.Vertices = Vertices;
                 prevTime2 = currentTime;
                 prevTime = currentTime;
             };
         }
+
     }
 }
