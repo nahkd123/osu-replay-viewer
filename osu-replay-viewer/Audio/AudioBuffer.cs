@@ -98,6 +98,12 @@ namespace osu_replay_renderer_netcore.Audio
             for (int i = 0; i < Data.Length; i++) stream.Write(Format.AmpToBytes(Data[i]));
         }
 
+        public void Process(Func<double, double> func)
+        {
+            for (int i = 0; i < Samples; i++)
+                for (int ch = 0; ch < Format.Channels; ch++) this[ch, i] = (float)func(this[ch, i]);
+        }
+
         public static AudioBuffer NoiseBuffer(AudioFormat format, int samples, double amp = 0.78)
         {
             var buff = new AudioBuffer(format, samples);
@@ -129,5 +135,8 @@ namespace osu_replay_renderer_netcore.Audio
             }
             return buff;
         }
+
+        public static AudioBuffer FromSeconds(AudioFormat format, double seconds) =>
+            new(format, (int)Math.Floor(format.SampleRate * seconds));
     }
 }

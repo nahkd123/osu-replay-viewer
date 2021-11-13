@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using osu.Framework.Audio.Sample;
+using osu.Framework.Audio.Track;
 using osu.Framework.Graphics.Audio;
 using osu.Game.Skinning;
 using System;
@@ -28,11 +29,10 @@ namespace osu_replay_renderer_netcore.Patching
         }
 
         public static event Action<ISample> OnSamplePlay;
+        public static event Action<ITrack> OnTrackPlay;
 
-        public static void TriggerOnSamplePlay(ISample sample)
-        {
-            OnSamplePlay?.Invoke(sample);
-        }
+        public static void TriggerOnSamplePlay(ISample sample) => OnSamplePlay?.Invoke(sample);
+        public static void TriggerOnTrackPlay(ITrack track) => OnTrackPlay?.Invoke(track);
     }
 
     [HarmonyPatch(typeof(PoolableSkinnableSample))]
@@ -42,6 +42,16 @@ namespace osu_replay_renderer_netcore.Patching
         static void Prefix(PoolableSkinnableSample __instance)
         {
             AudioPatcher.TriggerOnSamplePlay(__instance.Sample);
+        }
+    }
+
+    [HarmonyPatch(typeof(Track))]
+    [HarmonyPatch("Start")]
+    class Patch02
+    {
+        static void Prefix(Track __instance)
+        {
+            AudioPatcher.TriggerOnTrackPlay(__instance);
         }
     }
 }

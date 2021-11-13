@@ -19,6 +19,8 @@ using osu.Game.Scoring.Legacy;
 using osu.Game.Screens.Play;
 using osu.Game.Screens.Ranking;
 using osu.Game.Screens.Ranking.Statistics;
+using osu_replay_renderer_netcore.Audio;
+using osu_replay_renderer_netcore.Audio.Conversion;
 using osu_replay_renderer_netcore.CustomHosts;
 using System;
 using System.Collections.Generic;
@@ -45,8 +47,16 @@ namespace osu_replay_renderer_netcore
         public int ReplayAutoBeatmapID;
         public string ReplayFileLocation;
 
+        public bool DecodeAudio = false;
+        public AudioBuffer DecodedAudio;
+
         public OsuGameRecorder()
         {}
+
+        public string GetCurrentBeatmapAudioPath()
+        {
+            return Storage.GetFullPath(@"files" + Path.DirectorySeparatorChar + Beatmap.Value.BeatmapSetInfo.GetPathForFile(Beatmap.Value.Metadata.AudioFile));
+        }
 
         public WorkingBeatmap WorkingBeatmap { get => Beatmap.Value; }
 
@@ -182,7 +192,13 @@ namespace osu_replay_renderer_netcore
             var working = BeatmapManager.GetWorkingBeatmap(BeatmapManager.QueryBeatmap(beatmap => score.ScoreInfo.BeatmapInfoID == beatmap.ID));
             Beatmap.Value = working;
             SelectedMods.Value = score.ScoreInfo.Mods;
-            Console.WriteLine(score.ScoreInfo.BeatmapInfoID);
+
+            if (DecodeAudio)
+            {
+                Console.WriteLine("Decoding audio...");
+                DecodedAudio = FFmpegAudioDecoder.Decode(GetCurrentBeatmapAudioPath());
+                Console.WriteLine("Audio decoded!");
+            }
 
             Player = new RecorderReplayPlayer(score);
 
@@ -195,22 +211,7 @@ namespace osu_replay_renderer_netcore
             if (Host is HeadlessGameHost headless)
             {
                 Console.WriteLine("Headless Host detected");
-
-                // (Audio.TrackMixer as BassAudioMixer)
-                // This is some sort of bad practice, but we want to capture audio output that's
-                // generated from Bass
-                // Hopefully we can replace audio mixer with our own in the future...
-
-                /*var BassAudioMixer = typeof(AudioMixer).Assembly.GetType("osu.Framework.Audio.Mixing.Bass.BassAudioMixer");
-                var getHandle = BassAudioMixer.GetDeclaredMethod("get_Handle");
-                int trackHandle = (int)getHandle.Invoke(Audio.TrackMixer, null);
-                int sampleHandle = (int)getHandle.Invoke(Audio.SampleMixer, null);*/
-                if (headless is WindowsHeadlessGameHost wrv)
-                {
-                    /*wrv.TrackMixerHandle = trackHandle;
-                    wrv.SampleMixerHandle = sampleHandle;*/
-                    wrv.PrepareAudioDevices();
-                }
+                if (headless is WindowsHeadlessGameHost wrv) wrv.PrepareAudioDevices();
             }
         }
 

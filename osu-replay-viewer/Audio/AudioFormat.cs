@@ -48,5 +48,7 @@ namespace osu_replay_renderer_netcore.Audio
             if (PCMSize == 2) return BitConverter.GetBytes((short)(amp * 32767f));
             return null;
         }
+
+        public override string ToString() => $"AudioFormat({SampleRate}Hz, {Channels} channels, {PCMBits} bits)";
     }
 }
