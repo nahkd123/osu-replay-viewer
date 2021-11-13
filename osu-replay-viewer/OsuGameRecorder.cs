@@ -85,7 +85,7 @@ namespace osu_replay_renderer_netcore
                         foreach (var mod in info.Mods) mods += (mods.Length > 0 ? ", " : "") + mod.Name;
                     }
 
-                    Console.WriteLine($"#{info.ID}: {info.BeatmapInfo.GetDisplayTitle()} | {info.BeatmapInfo.StarDifficulty:F1}*");
+                    Console.WriteLine($"#{info.ID}: {info.BeatmapInfo.GetDisplayTitle()} | {info.BeatmapInfo.StarRating:F1}*");
                     Console.WriteLine($"{info.Ruleset.Name} | Played by {info.UserString}{onlineScoreID} | Ranked Score: {info.TotalScore:N0} ({info.DisplayAccuracy} {RankToActualRank(info.Rank)}) | Mods: {mods}");
                     Console.WriteLine();
                 }
@@ -103,7 +103,7 @@ namespace osu_replay_renderer_netcore
                 case "auto":
                     var ruleset = new OsuRuleset();
 
-                    var beatmapInfo = BeatmapManager.QueryBeatmap(v => v.OnlineBeatmapID == ReplayAutoBeatmapID);
+                    var beatmapInfo = BeatmapManager.QueryBeatmap(v => v.OnlineID == ReplayAutoBeatmapID);
                     if (beatmapInfo == null)
                     {
                         Console.Error.WriteLine("Beatmap not found: " + ReplayAutoBeatmapID);
@@ -127,7 +127,7 @@ namespace osu_replay_renderer_netcore
                         try
                         {
                             score = decoder.Parse(stream);
-                            score.ScoreInfo.BeatmapInfoID = BeatmapManager.QueryBeatmap(v => v.OnlineBeatmapID == score.ScoreInfo.BeatmapInfo.OnlineBeatmapID).ID;
+                            score.ScoreInfo.BeatmapInfoID = BeatmapManager.QueryBeatmap(v => v.OnlineID == score.ScoreInfo.BeatmapInfo.OnlineID).ID;
                         }
                         catch (LegacyScoreDecoder.BeatmapNotFoundException e)
                         {
