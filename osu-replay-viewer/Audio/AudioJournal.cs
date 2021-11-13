@@ -12,7 +12,7 @@ namespace osu_replay_renderer_netcore.Audio
     /// then you can combine everything by calling <see cref="MixSamples(AudioBuffer)"/>.
     /// The mechanic is similar to digital audio workspace applications
     /// </summary>
-    public class SamplesJournal
+    public class AudioJournal
     {
         public readonly List<JournalElement> JournalElements = new();
         public readonly Dictionary<int, AudioBuffer> CachedSampleBuffers = new();
