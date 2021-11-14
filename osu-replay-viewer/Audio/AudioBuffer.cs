@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SoundTouch;
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace osu_replay_renderer_netcore.Audio
 {
@@ -51,7 +48,11 @@ namespace osu_replay_renderer_netcore.Audio
         /// <returns></returns>
         public float this[int channel, int index]
         {
-            get => Data[Format.Channels * index + channel];
+            get {
+                int a = Format.Channels * index + channel;
+                if (a >= Data.Length) return 0f;
+                return Data[Format.Channels * index + channel];
+            }
             set => Data[Format.Channels * index + channel] = value;
         }
 
@@ -69,7 +70,7 @@ namespace osu_replay_renderer_netcore.Audio
             double srcIndexFloat = Format.SampleRate * ((double)dstIndex) / dstSampleRate;
             int srcIndex = (int)Math.Floor(srcIndexFloat);
             float a = srcIndex >= 0? this[channel, srcIndex] : this[channel, 0];
-            float b = srcIndex < Samples - 1? this[channel, srcIndex + 1] : this[channel, Samples - 1];
+            float b = srcIndex < Samples - 2? this[channel, srcIndex + 1] : this[channel, Samples - 1];
             float mix = (float)(srcIndexFloat - srcIndex);
             return a * (1f - mix) + b * mix;
         }
@@ -98,10 +99,50 @@ namespace osu_replay_renderer_netcore.Audio
             for (int i = 0; i < Data.Length; i++) stream.Write(Format.AmpToBytes(Data[i]));
         }
 
-        public void Process(Func<double, double> func)
+        public AudioBuffer Process(Func<double, double> func)
         {
             for (int i = 0; i < Samples; i++)
                 for (int ch = 0; ch < Format.Channels; ch++) this[ch, i] = (float)func(this[ch, i]);
+            return this;
+        }
+
+        public AudioBuffer ScaleTime(double scalePercentage = 1)
+        {
+            if (scalePercentage == 1) return this;
+            var buff2 = new AudioBuffer(Format, (int)Math.Floor(Samples * scalePercentage));
+            for (int i = 0; i < buff2.Samples; i++)
+            {
+                var t = i / (double)buff2.Samples;
+                var srcIndex = (int)Math.Floor(t * Samples);
+                for (int ch = 0; ch < Format.Channels; ch++) buff2[ch, i] = Resample(ch, Format.SampleRate, srcIndex);
+            }
+            return buff2;
+        }
+
+        public AudioBuffer CreateCopy()
+        {
+            var formatCopy = Format.CreateCopy();
+            var buff2 = new AudioBuffer(formatCopy, Samples);
+            Array.Copy(Data, buff2.Data, Data.Length);
+            return buff2;
+        }
+
+        public AudioBuffer SoundTouchAll(Action<SoundTouchProcessor> apply)
+        {
+            var p = new SoundTouchProcessor
+            {
+                Channels = Format.Channels,
+                SampleRate = Format.SampleRate
+            };
+            p.Tempo = 1.0;
+            p.Pitch = 1.0;
+            p.Rate = 1.0;
+
+            apply(p);
+            p.PutSamples(Data, Samples);
+            p.Flush();
+            p.ReceiveSamples(Data, Samples);
+            return this;
         }
 
         public static AudioBuffer NoiseBuffer(AudioFormat format, int samples, double amp = 0.78)

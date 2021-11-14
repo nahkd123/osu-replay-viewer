@@ -1,24 +1,17 @@
-﻿using JetBrains.Annotations;
-using osu.Framework;
-using osu.Framework.Bindables;
-using osu.Framework.Configuration;
+﻿using osu.Framework.Configuration;
 using osu.Framework.Extensions.IEnumerableExtensions;
 using osu.Framework.Input.Handlers;
 using osu.Framework.Logging;
 using osu.Framework.Platform;
 using osu.Framework.Platform.Windows;
-using osu.Framework.Threading;
 using osu.Framework.Timing;
+using osu_replay_renderer_netcore.Audio;
 using osu_replay_renderer_netcore.CustomHosts.Record;
+using osu_replay_renderer_netcore.Patching;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace osu_replay_renderer_netcore.CustomHosts
@@ -47,6 +40,47 @@ namespace osu_replay_renderer_netcore.CustomHosts
         public WindowsRecordGameHost(string gameName = null, int frameRate = 60) : base(gameName, false)
         {
             recordClock = new RecordClock(frameRate);
+            PrepareAudioRendering();
+        }
+
+        public AudioJournal AudioJournal { get; set; } = new();
+        public AudioBuffer AudioTrack { get; set; } = null;
+        public string AudioOutput { get; set; } = null;
+
+        private void PrepareAudioRendering()
+        {
+            AudioPatcher.OnTrackPlay += track =>
+            {
+                Console.WriteLine($"Audio Rendering: Track played at frame #{recordClock.CurrentFrame}");
+                Console.WriteLine(track.CurrentTime);
+                if (AudioTrack == null) return;
+                AudioJournal.BufferAt(recordClock.CurrentTime / 1000.0 + 2.0, AudioTrack);
+            };
+
+            AudioPatcher.OnSamplePlay += sample =>
+            {
+                Console.WriteLine($"Audio Rendering: Sample played at frame #{recordClock.CurrentFrame}: Freq = {sample.Frequency.Value}:{sample.AggregateFrequency.Value} | Volume = {sample.Volume}:{sample.AggregateVolume}");
+                AudioJournal.SampleAt(recordClock.CurrentTime / 1000.0, sample, buff =>
+                {
+                    buff = buff.CreateCopy();
+                    if (sample.AggregateFrequency.Value != 1) buff.SoundTouchAll(p => p.Pitch = sample.Frequency.Value * sample.AggregateFrequency.Value);
+                    buff.Process(x => x * sample.Volume.Value * sample.AggregateVolume.Value);
+                    return buff;
+                });
+            };
+        }
+
+        public AudioBuffer FinishAudio()
+        {
+            AudioBuffer buff = AudioBuffer.FromSeconds(new AudioFormat
+            {
+                Channels = 2,
+                SampleRate = 44100,
+                PCMSize = 2
+            }, AudioJournal.LongestDuration + 3.0);
+            AudioJournal.MixSamples(buff);
+            buff.Process(x => Math.Tanh(x));
+            return buff;
         }
 
         protected override void SetupConfig(IDictionary<FrameworkSetting, object> defaultOverrides)

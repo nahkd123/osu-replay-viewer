@@ -198,6 +198,7 @@ namespace osu_replay_renderer_netcore
                 Console.WriteLine("Decoding audio...");
                 DecodedAudio = FFmpegAudioDecoder.Decode(GetCurrentBeatmapAudioPath());
                 Console.WriteLine("Audio decoded!");
+                if (Host is WindowsRecordGameHost recordHost) recordHost.AudioTrack = DecodedAudio;
             }
 
             Player = new RecorderReplayPlayer(score);
@@ -257,6 +258,11 @@ namespace osu_replay_renderer_netcore
                             if (Host is WindowsRecordGameHost recordHost)
                             {
                                 recordHost.Encoder.FFmpeg.StandardInput.Close();
+                                var buff = recordHost.FinishAudio();
+                                var stream = new FileStream(recordHost.AudioOutput, FileMode.OpenOrCreate);
+                                buff.WriteWave(stream);
+                                stream.Close();
+
                                 recordHost.Encoder = null;
                             }
                             GracefullyExit();

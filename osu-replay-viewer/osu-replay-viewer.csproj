@@ -21,6 +21,7 @@
     <PackageReference Include="ppy.osu.Game.Rulesets.Mania" Version="2021.1113.0" />
     <PackageReference Include="ppy.osu.Game.Rulesets.Osu" Version="2021.1113.0" />
     <PackageReference Include="ppy.osu.Game.Rulesets.Taiko" Version="2021.1113.0" />
+    <PackageReference Include="SoundTouch.Net" Version="2.3.2" />
   </ItemGroup>
 
 </Project>

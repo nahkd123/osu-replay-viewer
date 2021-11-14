@@ -20,7 +20,7 @@ namespace osu_replay_renderer_netcore.Audio
 
         public double LongestDuration { get; private set; } = 0;
 
-        public void SampleAt(double t, ISample sample)
+        public void SampleAt(double t, ISample sample, Func<AudioBuffer, AudioBuffer> process = null)
         {
             int recursionAllowed = 50;
             while (sample is DrawableSample sample2 && recursionAllowed > 0)
@@ -32,18 +32,23 @@ namespace osu_replay_renderer_netcore.Audio
             if (!sample.IsSampleBass()) throw new Exception($"The given sample doesn't have SampleBass instance");
 
             var bass = sample.AsSampleBass();
+            if (bass.SampleId == 0) return;
+
             AudioBuffer buff;
             if (!CachedSampleBuffers.ContainsKey(bass.SampleId))
             {
                 buff = bass.AsAudioBuffer();
+                if (buff == null) return;
+
                 CachedSampleBuffers.Add(bass.SampleId, buff);
             }
             else buff = CachedSampleBuffers[bass.SampleId];
-            BufferAt(t, buff);
+            BufferAt(t, buff, process);
         }
 
-        public void BufferAt(double t, AudioBuffer buff)
+        public void BufferAt(double t, AudioBuffer buff, Func<AudioBuffer, AudioBuffer> process = null)
         {
+            if (process != null) buff = process(buff);
             JournalElements.Add(new JournalElement { Time = t, Buffer = buff });
             if (LongestDuration < t + buff.Duration) LongestDuration = t + buff.Duration;
         }

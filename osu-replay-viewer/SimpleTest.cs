@@ -43,6 +43,11 @@ namespace osu_replay_renderer_netcore
             {
                 return Math.Sin(t * 440.0 * 2 * Math.PI) * 0.5;
             });
+            var sampleBuffer3 = sampleBuffer2.CreateCopy();
+            sampleBuffer3.SoundTouchAll(p =>
+            {
+                p.Pitch = 1.5;
+            });
             var mixer = new SamplesMixer(targetBuffer);
 
             Console.WriteLine("Mixing...");
@@ -52,6 +57,7 @@ namespace osu_replay_renderer_netcore
             mixer.Mix(sampleBuffer1, 8);
 
             mixer.Mix(sampleBuffer2, 1);
+            mixer.Mix(sampleBuffer3, 3);
             mixer.Mix(sampleBuffer2, 7);
             mixer.Mix(sampleBuffer2, 7);
             mixer.Mix(sampleBuffer2, 8);

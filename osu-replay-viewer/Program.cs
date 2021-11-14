@@ -34,6 +34,7 @@ namespace osu_replay_renderer_netcore
             OptionDescription recordOutput;
             OptionDescription recordResolution;
             OptionDescription recordFPS;
+            OptionDescription recordAudioOutput;
 
             OptionDescription ffmpegPreset;
             OptionDescription ffmpegFramesBlending;
@@ -126,6 +127,14 @@ namespace osu_replay_renderer_netcore
                         SingleDash = new[] { "O" },
                         Parameters = new[] { "Output = osu-replay.mp4" },
                         ProcessedParameters = new[] { "osu-replay.mp4" }
+                    },
+                    recordAudioOutput = new()
+                    {
+                        Name = "Record Audio Output",
+                        Description = "Set record audio output (the file is always in RIFF Wave format)",
+                        DoubleDashes = new[] { "record-audio", "record-audio-output" },
+                        SingleDash = new[] { "AO" },
+                        Parameters = new[] { "Output = <--record-output>.wav" }
                     },
                     recordResolution = new()
                     {
@@ -292,6 +301,8 @@ namespace osu_replay_renderer_netcore
                 if (recordMode.Triggered)
                 {
                     if (!CLIUtils.AskFileDelete(alwaysYes.Triggered, recordOutput[0])) return;
+                    var audioOutput = recordAudioOutput.ProcessedParameters.Length > 0 ? recordAudioOutput[0] : (recordOutput[0] + ".wav");
+                    if (!CLIUtils.AskFileDelete(alwaysYes.Triggered, audioOutput)) return;
 
                     int fps = ParseIntOrThrow(recordFPS[0]);
                     int blending = ParseIntOrThrow(ffmpegFramesBlending[0]);
@@ -315,6 +326,8 @@ namespace osu_replay_renderer_netcore
                         FramesBlending = blending,
                         MotionInterpolation = ffmpegMotionInterpolation.Triggered,
                     };
+                    recordHost.AudioOutput = audioOutput;
+                    
                     recordHost.Encoder.StartFFmpeg();
                 }
                 else if (headlessMode.Triggered)
@@ -344,6 +357,7 @@ namespace osu_replay_renderer_netcore
                 return;
             }
 
+            if (recordMode.Triggered) game.DecodeAudio = true;
             host.Run(game);
             host.Dispose();
         }

@@ -37,6 +37,13 @@ namespace osu_replay_renderer_netcore.Audio
         /// </summary>
         public int BytesPerSample { get => PCMSize * Channels; }
 
+        public AudioFormat CreateCopy() => new()
+        {
+            SampleRate = SampleRate,
+            Channels = Channels,
+            PCMSize = PCMSize
+        };
+
         public WaveFormat ToBass()
         {
             return new WaveFormat(SampleRate, BytesPerSample * 8, Channels);
