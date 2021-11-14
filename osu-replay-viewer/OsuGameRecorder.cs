@@ -80,8 +80,8 @@ namespace osu_replay_renderer_netcore
                     if (!(
                         ListQuery == null ||
                         (
-                            info.BeatmapInfo.GetDisplayTitle().Equals(ListQuery, StringComparison.OrdinalIgnoreCase) ||
-                            info.UserString.Equals(ListQuery, StringComparison.OrdinalIgnoreCase)
+                            info.BeatmapInfo.GetDisplayTitle().Contains(ListQuery, StringComparison.OrdinalIgnoreCase) ||
+                            info.UserString.Contains(ListQuery, StringComparison.OrdinalIgnoreCase)
                         )
                     )) continue;
 
