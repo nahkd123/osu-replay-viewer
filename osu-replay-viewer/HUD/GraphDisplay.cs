@@ -23,5 +23,16 @@ namespace osu_replay_renderer_netcore.HUD
             min = pp - graph.WindowScale / 2.0;
             max = pp + graph.WindowScale / 2.0;
         }
+
+        public static void WindowedClamped(PerformanceGraph graph, double pp, out double min, out double max)
+        {
+            min = pp - graph.WindowScale / 2.0;
+            max = pp + graph.WindowScale / 2.0;
+            if (min < 0)
+            {
+                max -= min;
+                min = 0;
+            }
+        }
     }
 }

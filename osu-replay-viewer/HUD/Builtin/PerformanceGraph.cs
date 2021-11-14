@@ -28,7 +28,7 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
         public Bindable<double> PP = new BindableDouble(0);
         public double Minimum = 0, Maximum = 10;
 
-        public GraphDisplay.GraphWindowProcessor WindowProcessor { get; set; } = GraphDisplay.Windowed;
+        public GraphDisplay.GraphWindowProcessor WindowProcessor { get; set; } = GraphDisplay.WindowedClamped;
         public double CurrentRange { get => Maximum - Minimum; }
         public double WindowScale { get; set; } = 50;
         public double Smooth { get; set; } = 0.9999;
