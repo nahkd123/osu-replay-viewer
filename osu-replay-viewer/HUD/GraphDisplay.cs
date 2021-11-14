@@ -1,17 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using osu_replay_renderer_netcore.HUD.Builtin;
+using System;
 
 namespace osu_replay_renderer_netcore.HUD
 {
-    /// <summary>
-    /// Graph display mode
-    /// </summary>
-    public enum GraphDisplay
+    public static class GraphDisplay
     {
-        SCALED_FULL_RANGE,
-        SCALED_WINDOWED
+        public delegate void GraphWindowProcessor(
+            PerformanceGraph graph,
+            double pp,
+            out double min,
+            out double max
+        );
+
+        public static void Full(PerformanceGraph graph, double pp, out double min, out double max)
+        {
+            min = graph.Minimum;
+            max = graph.Maximum;
+        }
+
+        public static void Windowed(PerformanceGraph graph, double pp, out double min, out double max)
+        {
+            min = pp - graph.WindowScale / 2.0;
+            max = pp + graph.WindowScale / 2.0;
+        }
     }
 }

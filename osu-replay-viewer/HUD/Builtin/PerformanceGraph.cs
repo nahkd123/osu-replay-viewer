@@ -28,29 +28,10 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
         public Bindable<double> PP = new BindableDouble(0);
         public double Minimum = 0, Maximum = 10;
 
-        public GraphDisplay DisplayMode { get; set; } = GraphDisplay.SCALED_WINDOWED;
+        public GraphDisplay.GraphWindowProcessor WindowProcessor { get; set; } = GraphDisplay.Windowed;
         public double CurrentRange { get => Maximum - Minimum; }
         public double WindowScale { get; set; } = 50;
-
-        public double WindowMinimum
-        {
-            get => DisplayMode switch
-            {
-                GraphDisplay.SCALED_FULL_RANGE => Minimum,
-                GraphDisplay.SCALED_WINDOWED => PP.Value - WindowScale / 2.0,
-                _ => Minimum
-            };
-        }
-        public double WindowMaximum
-        {
-            get => DisplayMode switch
-            {
-                GraphDisplay.SCALED_FULL_RANGE => Maximum,
-                GraphDisplay.SCALED_WINDOWED => PP.Value + WindowScale / 2.0,
-                _ => Maximum
-            };
-        }
-        public double WindowRange { get => WindowMaximum - WindowMinimum; }
+        public double Smooth { get; set; } = 0.9999;
 
         public PerformanceGraph() : base("Performance Graph")
         {
@@ -82,6 +63,7 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
 
             double prevTime = 0.0;
             double prevTime2 = 0.0;
+            double internalPPCounter = 0.0;
 
             OnUpdate += (drawable) =>
             {
@@ -99,16 +81,20 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
                 // Shift
                 for (int i = 0; i < NUM_OF_SEGMENTS; i++)
                 {
-                    Segments[i] = i < (NUM_OF_SEGMENTS - segmentsUpdate) ? Segments[i + segmentsUpdate] : PP.Value;
+                    double nextPP = internalPPCounter * Smooth + PP.Value * (1.0 - Smooth);
+                    internalPPCounter = nextPP;
+                    Segments[i] = i < (NUM_OF_SEGMENTS - segmentsUpdate) ? Segments[i + segmentsUpdate] : nextPP;
                     if (Segments[i] < Minimum) Minimum = Segments[i];
                     if (Segments[i] > Maximum) Maximum = Segments[i];
                 }
 
                 // Display
+                WindowProcessor(this, internalPPCounter, out double min, out double max);
+                double range = max - min;
                 for (int i = 0; i < NUM_OF_SEGMENTS; i++)
                 {
                     Vertices[i].X = i * DrawWidth / NUM_OF_SEGMENTS;
-                    Vertices[i].Y = Math.Clamp(height - (float)((Segments[i] - WindowMinimum) / WindowRange) * height, 0, height + 2f);
+                    Vertices[i].Y = Math.Clamp(height - (float)((Segments[i] - min) / range) * height, 0, height + 2f);
                 }
 
                 Path2D.Vertices = Vertices;
