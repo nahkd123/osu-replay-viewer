@@ -43,13 +43,13 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
             Add(graph = new()
             {
                 RelativeSizeAxes = Axes.X,
-                AutoSizeAxes = Axes.Y,
+                Height = 100,
+                Masking = true,
                 Children = new Drawable[]
                 {
                     new Box
                     {
-                        RelativeSizeAxes = Axes.X,
-                        Height = 100,
+                        RelativeSizeAxes = Axes.Both,
                         Colour = bgColour,
                     },
                     Path2D = new SmoothPath
@@ -58,7 +58,7 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
                         Colour = OsuColour.Gray(1.0f),
                         Vertices = Vertices
                     }
-                }
+                },
             });
 
             double prevTime = 0.0;
@@ -76,8 +76,6 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
                     return;
                 }
 
-                float height = graph.DrawHeight - 4f;
-
                 // Shift
                 for (int i = 0; i < NUM_OF_SEGMENTS; i++)
                 {
@@ -94,7 +92,7 @@ namespace osu_replay_renderer_netcore.HUD.Builtin
                 for (int i = 0; i < NUM_OF_SEGMENTS; i++)
                 {
                     Vertices[i].X = i * DrawWidth / NUM_OF_SEGMENTS;
-                    Vertices[i].Y = Math.Clamp(height - (float)((Segments[i] - min) / range) * height, 0, height + 2f);
+                    Vertices[i].Y = graph.Height - (float)((Segments[i] - min) / range) * graph.Height;
                 }
 
                 Path2D.Vertices = Vertices;
