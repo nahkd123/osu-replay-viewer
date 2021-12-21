@@ -85,7 +85,7 @@ namespace osu_replay_renderer_netcore
                         )
                     )) continue;
 
-                    long scoreId = info.OnlineScoreID ?? -1;
+                    long scoreId = info.OnlineID ?? -1;
 
                     string onlineScoreID = scoreId == -1 ? "" : $" (Online Score ID: #{scoreId})";
                     string mods = "(no mod)";
@@ -109,7 +109,7 @@ namespace osu_replay_renderer_netcore
             switch (ReplayViewType)
             {
                 case "local": score = ScoreManager.GetScore(ScoreManager.QueryScores(v => v.ID == ReplayOfflineScoreID).First()); break;
-                case "online": score = ScoreManager.GetScore(ScoreManager.QueryScores(v => v.OnlineScoreID == ReplayOnlineScoreID).First()); break;
+                case "online": score = ScoreManager.GetScore(ScoreManager.QueryScores(v => v.OnlineID == ReplayOnlineScoreID).First()); break;
                 case "auto":
                     var ruleset = new OsuRuleset();
 
@@ -179,8 +179,6 @@ namespace osu_replay_renderer_netcore
             config.SetValue(FrameworkSetting.ConfineMouseMode, ConfineMouseMode.Never);
             if (!(Host is WindowsRecordGameHost)) config.SetValue(FrameworkSetting.FrameSync, FrameSync.VSync);
             Audio.Balance.Value = 0;
-            Audio.TrackMixer.Balance.Value = 0;
-            Audio.SampleMixer.Balance.Value = 0;
 
             ScreenStack = new RecorderScreenStack();
             LoadComponent(ScreenStack);
