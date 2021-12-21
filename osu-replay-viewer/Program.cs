@@ -60,7 +60,8 @@ namespace osu_replay_renderer_netcore
                         Name = "Mod Override",
                         Description = "Override Mod(s). You can use 'no-mod' or 'acronyms:NM' to clear all mods",
                         DoubleDashes = new[] { "mod-override" },
-                        SingleDash = new[] { "MOD" }
+                        SingleDash = new[] { "MOD" },
+                        Parameters = new[] { "<Mod Name/acronyms:AC>" }
                     },
                     query = new()
                     {
