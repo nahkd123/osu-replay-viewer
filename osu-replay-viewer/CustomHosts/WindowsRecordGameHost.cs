@@ -59,7 +59,7 @@ namespace osu_replay_renderer_netcore.CustomHosts
 
             AudioPatcher.OnSamplePlay += sample =>
             {
-                Console.WriteLine($"Audio Rendering: Sample played at frame #{recordClock.CurrentFrame}: Freq = {sample.Frequency.Value}:{sample.AggregateFrequency.Value} | Volume = {sample.Volume}:{sample.AggregateVolume}");
+                Console.WriteLine($"Audio Rendering: Sample played at frame #{recordClock.CurrentFrame}: Freq = {sample.Frequency.Value}:{sample.AggregateFrequency.Value} | Volume = {sample.Volume}:{sample.AggregateVolume} | {recordClock.CurrentTime}s");
                 AudioJournal.SampleAt(recordClock.CurrentTime / 1000.0, sample, buff =>
                 {
                     buff = buff.CreateCopy();
