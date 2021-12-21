@@ -40,6 +40,7 @@ namespace osu_replay_renderer_netcore
             OptionDescription ffmpegFramesBlending;
             OptionDescription ffmpegMotionInterpolation;
             OptionDescription ffmpegVideoEncoder;
+            OptionDescription ffmpegBitrate;
 
             OptionDescription experimental;
             OptionDescription test;
@@ -191,6 +192,15 @@ namespace osu_replay_renderer_netcore
                         Parameters = new[] { "Encoder = libx264" },
                         ProcessedParameters = new[] { "libx264" }
                     },
+                    ffmpegBitrate = new()
+                    {
+                        Name = "FFmpeg Global Quality",
+                        Description = "Set the max bitrate for output video",
+                        DoubleDashes = new[] { "ffmpeg-bitrate" },
+                        SingleDash = new[] { "FQ" },
+                        Parameters = new[] { "Bitrate = 100M" },
+                        ProcessedParameters = new[] { "100M" }
+                    },
 
                     // Misc
                     experimental = new()
@@ -322,6 +332,7 @@ namespace osu_replay_renderer_netcore
                         OutputPath = recordOutput[0],
                         Preset = ffmpegPreset[0],
                         Encoder = ffmpegVideoEncoder[0],
+                        Bitrate = ffmpegBitrate[0],
 
                         // Smoothing options
                         FramesBlending = blending,

@@ -24,6 +24,7 @@ namespace osu_replay_renderer_netcore.CustomHosts.Record
         public string OutputPath { get; set; } = "output.mp4";
         public string Preset { get; set; } = "slow";
         public string Encoder { get; set; } = "libx264";
+        public string Bitrate { get; set; } = "100M";
         public bool MotionInterpolation { get; set; } = false;
 
         /// <summary>
@@ -43,7 +44,7 @@ namespace osu_replay_renderer_netcore.CustomHosts.Record
                 if (actualFramesBlending > 1) inputEffect = $"-vf tblend=all_mode=average -r {FPS}";
                 else if (MotionInterpolation) inputEffect = $"-vf minterpolate=fps={FPS * 4}";
                 else inputEffect = null;
-                string outputParameters = $"-c:v {Encoder} -preset {Preset} {OutputPath}";
+                string outputParameters = $"-b:v {Bitrate} -c:v {Encoder} -preset {Preset} {OutputPath}";
 
                 /*if (actualFramesBlending > 1) return $"-f image2pipe -vcodec {ImageFormat} -framerate {FPS * actualFramesBlending} -i pipe: -vf tblend=all_mode=average -r {FPS} -preset {Preset} {OutputPath}";
                 else if (MotionInterpolation) return $"-f image2pipe -vcodec {ImageFormat} -framerate {FPS} -i pipe: -vf minterpolate=fps={FPS * 4} -preset {Preset} {OutputPath}";
