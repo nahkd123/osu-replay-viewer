@@ -35,6 +35,7 @@ namespace osu_replay_renderer_netcore
             OptionDescription recordResolution;
             OptionDescription recordFPS;
             OptionDescription recordAudioOutput;
+            OptionDescription recordJpegMode;
 
             OptionDescription ffmpegPreset;
             OptionDescription ffmpegFramesBlending;
@@ -155,6 +156,13 @@ namespace osu_replay_renderer_netcore
                         SingleDash = new[] { "FPS" },
                         Parameters = new[] { "FPS = 60" },
                         ProcessedParameters = new[] { "60" }
+                    },
+                    recordJpegMode = new()
+                    {
+                        Name = "Jpeg Output Mode",
+                        Description = "Send Jpeg data to FFmpeg process instead of raw pixels",
+                        DoubleDashes = new[] { "jpeg" },
+                        SingleDash = new[] { "JPG" }
                     },
 
                     // FFmpeg options
@@ -333,6 +341,7 @@ namespace osu_replay_renderer_netcore
                         Preset = ffmpegPreset[0],
                         Encoder = ffmpegVideoEncoder[0],
                         Bitrate = ffmpegBitrate[0],
+                        UsingJPEG = recordJpegMode.Triggered,
 
                         // Smoothing options
                         FramesBlending = blending,

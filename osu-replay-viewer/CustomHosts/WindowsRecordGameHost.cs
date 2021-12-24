@@ -137,11 +137,9 @@ namespace osu_replay_renderer_netcore.CustomHosts
             {
                 Task.WaitAll(previousScreenshotTask);
                 Image<Rgba32> ss = previousScreenshotTask.Result;
-                //if (!Directory.Exists(@"video")) Directory.CreateDirectory(@"video");
-                //ss.SaveAsJpeg(@"./video/" + recordClock.CurrentFrame.ToString().PadLeft(8, '0') + ".jpeg");
                 if (UsingEncoder && Encoder != null)
                 {
-                    if (ss.Width == Encoder.Resolution.Width && ss.Height == Encoder.Resolution.Height) Encoder.WriteRGBA(ss);
+                    if (ss.Width == Encoder.Resolution.Width && ss.Height == Encoder.Resolution.Height) Encoder.WriteFrame(ss);
                 }
             }
             previousScreenshotTask = TakeScreenshotAsync();

@@ -1,4 +1,5 @@
 ﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,9 @@ namespace osu_replay_renderer_netcore.CustomHosts.Record
     {
         public Process FFmpeg { get; private set; }
         public Stream InputStream { get; private set; }
+        public JpegEncoder JpegEncoder { get; private set; }
 
+        public bool UsingJPEG { get; set; } = false;
         public int FPS { get; set; } = 60;
         public System.Drawing.Size Resolution { get; set; }
         public string OutputPath { get; set; } = "output.mp4";
@@ -39,7 +42,10 @@ namespace osu_replay_renderer_netcore.CustomHosts.Record
             {
                 int actualFramesBlending = Math.Max(FramesBlending, 1);
 
-                string inputParameters = $"-f rawvideo -pixel_format rgb24 -video_size {Resolution.Width}x{Resolution.Height} -framerate {FPS * actualFramesBlending} -i pipe:";
+                string inputParameters;
+                if (UsingJPEG) inputParameters = $"-f image2pipe -vcodec mjpeg -framerate {FPS * actualFramesBlending} -i pipe:";
+                else inputParameters = $"-f rawvideo -pixel_format rgb24 -video_size {Resolution.Width}x{Resolution.Height} -framerate {FPS * actualFramesBlending} -i pipe:";
+
                 string inputEffect;
                 if (actualFramesBlending > 1) inputEffect = $"-vf tblend=all_mode=average -r {FPS}";
                 else if (MotionInterpolation) inputEffect = $"-vf minterpolate=fps={FPS * 4}";
@@ -58,6 +64,7 @@ namespace osu_replay_renderer_netcore.CustomHosts.Record
         public void StartFFmpeg()
         {
             buffer = new byte[Resolution.Width * Resolution.Height * 3];
+
             Console.WriteLine("Starting FFmpeg process with arguments: " + FFmpegArguments);
             FFmpeg = new Process()
             {
@@ -80,6 +87,13 @@ namespace osu_replay_renderer_netcore.CustomHosts.Record
             };
             FFmpeg.Start();
             InputStream = FFmpeg.StandardInput.BaseStream;
+            if (UsingJPEG) JpegEncoder = new();
+        }
+
+        public void WriteFrame(Image<Rgba32> image)
+        {
+            if (!UsingJPEG) WriteRGBA(image);
+            else image.SaveAsJpeg(InputStream, JpegEncoder);
         }
 
         public void WriteRGBA(Image<Rgba32> image)
