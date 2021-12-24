@@ -12,6 +12,7 @@ using osu.Game;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Cursor;
+using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
 using osu.Game.Rulesets.Osu;
 using osu.Game.Scoring;
@@ -85,19 +86,23 @@ namespace osu_replay_renderer_netcore
                         )
                     )) continue;
 
-                    long scoreId = info.OnlineID ?? -1;
-
-                    string onlineScoreID = scoreId == -1 ? "" : $" (Online Score ID: #{scoreId})";
-                    string mods = "(no mod)";
-                    if (info.Mods.Length > 0)
+                    try
                     {
-                        mods = "";
-                        foreach (var mod in info.Mods) mods += (mods.Length > 0 ? ", " : "") + mod.Name;
-                    }
+                        long scoreId = info.OnlineID ?? -1;
 
-                    Console.WriteLine($"#{info.ID}: {info.BeatmapInfo.GetDisplayTitle()} | {info.BeatmapInfo.StarRating:F1}*");
-                    Console.WriteLine($"{info.Ruleset.Name} | Played by {info.UserString}{onlineScoreID} | Ranked Score: {info.TotalScore:N0} ({info.DisplayAccuracy} {RankToActualRank(info.Rank)}) | Mods: {mods}");
-                    Console.WriteLine();
+                        string onlineScoreID = scoreId == -1 ? "" : $" (Online Score ID: #{scoreId})";
+                        string mods = "(no mod)";
+                        if (info.Mods.Length > 0)
+                        {
+                            mods = "";
+                            foreach (var mod in info.Mods) mods += (mods.Length > 0 ? ", " : "") + mod.Name;
+                        }
+
+                        Console.WriteLine($"#{info.ID}: {info.BeatmapInfo.GetDisplayTitle()} | {info.BeatmapInfo.StarRating:F1}*");
+                        Console.WriteLine($"{info.Ruleset.Name} | Played by {info.UserString}{onlineScoreID} | Ranked Score: {info.TotalScore:N0} ({info.DisplayAccuracy} {RankToActualRank(info.Rank)}) | Mods: {mods}");
+                        Console.WriteLine();
+                    }
+                    catch (RulesetLoadException) { }
                 }
                 Console.WriteLine("--------------------");
                 Console.WriteLine();
