@@ -1,9 +1,7 @@
 ﻿using osu.Framework.Bindables;
-using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Testing;
 using osu.Framework.Timing;
-using osu.Game;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.Difficulty;
 using osu.Game.Rulesets.Judgements;
@@ -13,13 +11,10 @@ using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Scoring;
 using osu.Game.Screens.Play;
 using osu.Game.Screens.Play.HUD;
-using osu.Game.Skinning;
 using osu_replay_renderer_netcore.HUD.Builtin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace osu_replay_renderer_netcore
 {
@@ -27,6 +22,7 @@ namespace osu_replay_renderer_netcore
     {
         public Score GivenScore { get; private set; }
         public bool ManipulateClock { get; set; } = false;
+        public bool HideOverlays { get; set; } = false;
 
         public RecorderReplayPlayer(Score score) : base(score)
         {
@@ -38,8 +34,12 @@ namespace osu_replay_renderer_netcore
             base.LoadComplete();
             HUDOverlay.ShowHud.Value = false;
             HUDOverlay.HoldToQuit.Hide();
-            HUDOverlay.RemoveRecursive(v => v == HUDOverlay.PlayerSettingsOverlay);
-            GameplayClockContainer.RemoveRecursive(v => v is SkipOverlay);
+
+            if (HideOverlays)
+            {
+                HUDOverlay.RemoveRecursive(v => v == HUDOverlay.PlayerSettingsOverlay);
+                GameplayClockContainer.RemoveRecursive(v => v is SkipOverlay);
+            }
 
             var game = Game as OsuGameRecorder;
             if (

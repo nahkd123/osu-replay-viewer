@@ -1,15 +1,9 @@
-﻿using ManagedBass;
-using NUnit.Framework;
-using osu.Framework;
+﻿using osu.Framework;
 using osu.Framework.Platform;
-using osu.Framework.Timing;
-using osu.Game.Screens.Play;
 using osu_replay_renderer_netcore.CLI;
 using osu_replay_renderer_netcore.CustomHosts;
 using osu_replay_renderer_netcore.Patching;
-using Sentry;
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace osu_replay_renderer_netcore
@@ -44,6 +38,7 @@ namespace osu_replay_renderer_netcore
             OptionDescription ffmpegBitrate;
 
             OptionDescription experimental;
+            OptionDescription overrideOverlayOptions;
             OptionDescription test;
 
             CommandLineProcessor cli = new()
@@ -219,6 +214,14 @@ namespace osu_replay_renderer_netcore
                         SingleDash = new[] { "experimental" },
                         Parameters = new[] { "Flag" }
                     },
+                    overrideOverlayOptions = new()
+                    {
+                        Name = "Override Overlay Options",
+                        Description = "Control the visiblity of player overlay",
+                        DoubleDashes = new[] { "overlay-override" },
+                        SingleDash = new[] { "overlay" },
+                        Parameters = new[] { "true/false" }
+                    },
                     test = new()
                     {
                         Name = "Test Mode",
@@ -379,6 +382,12 @@ namespace osu_replay_renderer_netcore
                 {
                     BindIPC = false
                 });
+
+                // Misc
+                if (overrideOverlayOptions.Triggered) game.HideOverlaysInPlayer = ParseBoolOrThrow(overrideOverlayOptions.ProcessedParameters[0]);
+                else if (recordMode.Triggered) game.HideOverlaysInPlayer = true;
+                else game.HideOverlaysInPlayer = false;
+
             } catch (CLIException cliException)
             {
                 Console.WriteLine("Error while processing CLI arguments:");
@@ -407,6 +416,21 @@ namespace osu_replay_renderer_netcore
                 DisplayMessage = $"Invalid integer: {str}"
             };
             return val;
+        }
+
+        static bool ParseBoolOrThrow(string str)
+        {
+            str = str.ToLower();
+            return str switch {
+                "true" or "yes" or "1" => true,
+                "false" or "no" or "0" => false,
+                _ => throw new CLIException
+                {
+                    Cause = "Command-line Arguments (Parsing)",
+                    DisplayMessage = $"Invaild boolean: {str}",
+                    Suggestions = new[] { "Allowed values: true/yes/1 or false/no/0" }
+                }
+            };
         }
     }
 }

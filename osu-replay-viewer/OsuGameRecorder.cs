@@ -51,6 +51,7 @@ namespace osu_replay_renderer_netcore
 
         public bool DecodeAudio = false;
         public AudioBuffer DecodedAudio;
+        public bool HideOverlaysInPlayer = false;
 
         public OsuGameRecorder()
         {}
@@ -206,7 +207,10 @@ namespace osu_replay_renderer_netcore
                 if (Host is WindowsRecordGameHost recordHost) recordHost.AudioTrack = DecodedAudio;
             }
 
-            Player = new RecorderReplayPlayer(score);
+            Player = new RecorderReplayPlayer(score)
+            {
+                HideOverlays = HideOverlaysInPlayer
+            };
 
             RecorderReplayPlayerLoader loader = new RecorderReplayPlayerLoader(Player);
             ScreenStack.Push(loader);
