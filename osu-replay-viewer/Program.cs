@@ -233,8 +233,10 @@ namespace osu_replay_renderer_netcore
             };
 
             // Apply patches
-            // We only want to apply audio-related patches for record mode
-            AudioPatcher.DoPatching();
+            if (ShouldApplyPatch(args))
+            {
+                AudioPatcher.DoPatching();
+            }
 
             var game = new OsuGameRecorder();
             modOverride.OnOptions += (args) => { game.ModsOverride.Add(args[0]); };
@@ -431,6 +433,17 @@ namespace osu_replay_renderer_netcore
                     Suggestions = new[] { "Allowed values: true/yes/1 or false/no/0" }
                 }
             };
+        }
+
+        /// <summary>
+        /// Determine when to apply Harmony patches. Could decrease start time.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private static bool ShouldApplyPatch(string[] args)
+        {
+            foreach (var arg in args) if (arg.Equals("--record") || arg.Equals("-R")) return true;
+            return false;
         }
     }
 }
