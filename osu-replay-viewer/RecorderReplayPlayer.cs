@@ -89,7 +89,7 @@ namespace osu_replay_renderer_netcore
                     attrib,
                     GameplayState.Score.ScoreInfo
                 );
-                performanceGraph.PP.Value = calc?.Calculate() ?? 0;
+                performanceGraph.PP.Value = calc.Calculate().Total;
 
                 // TODO: Expose PP to OsuGameRecorder
             };

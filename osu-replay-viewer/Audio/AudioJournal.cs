@@ -28,6 +28,8 @@ namespace osu_replay_renderer_netcore.Audio
                 sample = sample2.GetUnderlaying();
                 recursionAllowed--;
             }
+            Console.WriteLine(sample.GetType());
+            if (sample is SampleVirtual) return;
             if (recursionAllowed <= 0) throw new Exception($"Recursion exceed while getting SampleBass instance");
             if (!sample.IsSampleBass()) throw new Exception($"The given sample doesn't have SampleBass instance");
 

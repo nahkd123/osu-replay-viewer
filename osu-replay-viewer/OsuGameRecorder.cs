@@ -10,6 +10,7 @@ using osu.Framework.Threading;
 using osu.Framework.Timing;
 using osu.Game;
 using osu.Game.Beatmaps;
+using osu.Game.Database;
 using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Cursor;
 using osu.Game.Rulesets;
@@ -44,7 +45,7 @@ namespace osu_replay_renderer_netcore
 
         public string ReplayViewType;
         public long ReplayOnlineScoreID;
-        public int ReplayOfflineScoreID;
+        public Guid ReplayOfflineScoreID;
         public int ReplayAutoBeatmapID;
         public string ReplayFileLocation;
 
@@ -71,24 +72,23 @@ namespace osu_replay_renderer_netcore
                 if (ListQuery != null) Console.WriteLine($"(Query = '{ListQuery}')");
                 Console.WriteLine();
 
-                /*foreach (ScoreInfo info in ScoreManager.QueryScores(info =>
-                    ListQuery == null ||
-                    info.UserString.IndexOf(ListQuery) >= 0 ||
-                    info.BeatmapInfo.GetDisplayTitle().IndexOf(ListQuery) >= 0
-                ))*/
-                foreach (ScoreInfo info in ScoreManager.QueryScores(info => true))
+                // Hacky way to get realm access
+                RealmAccess realm = (RealmAccess) typeof(ScoreManager).GetField("realm", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ScoreManager);
+
+                foreach (ScoreInfo info in realm.Run(r => r.All<ScoreInfo>().Detach()))
                 {
                     if (!(
                         ListQuery == null ||
                         (
                             info.BeatmapInfo.GetDisplayTitle().Contains(ListQuery, StringComparison.OrdinalIgnoreCase) ||
-                            info.UserString.Contains(ListQuery, StringComparison.OrdinalIgnoreCase)
+                            info.User.Username.Contains(ListQuery, StringComparison.OrdinalIgnoreCase)
                         )
                     )) continue;
 
                     try
                     {
-                        long scoreId = info.OnlineID ?? -1;
+                        long scoreId = info.OnlineID;
+                        if (scoreId <= 0) scoreId = -1;
 
                         string onlineScoreID = scoreId == -1 ? "" : $" (Online Score ID: #{scoreId})";
                         string mods = "(no mod)";
@@ -98,8 +98,9 @@ namespace osu_replay_renderer_netcore
                             foreach (var mod in info.Mods) mods += (mods.Length > 0 ? ", " : "") + mod.Name;
                         }
 
-                        Console.WriteLine($"#{info.ID}: {info.BeatmapInfo.GetDisplayTitle()} | {info.BeatmapInfo.StarRating:F1}*");
-                        Console.WriteLine($"{info.Ruleset.Name} | Played by {info.UserString}{onlineScoreID} | Ranked Score: {info.TotalScore:N0} ({info.DisplayAccuracy} {RankToActualRank(info.Rank)}) | Mods: {mods}");
+                        Console.WriteLine($"{info.BeatmapInfo.GetDisplayTitle()} | {info.BeatmapInfo.StarRating:F1}*");
+                        Console.WriteLine($"View replay: --view local {info.ID}");
+                        Console.WriteLine($"{info.Ruleset.Name} | Played by {info.User.Username}{onlineScoreID} | Ranked Score: {info.TotalScore:N0} ({info.DisplayAccuracy} {RankToActualRank(info.Rank)}) | Mods: {mods}");
                         Console.WriteLine();
                     }
                     catch (RulesetLoadException) { }
@@ -113,8 +114,8 @@ namespace osu_replay_renderer_netcore
             Score score;
             switch (ReplayViewType)
             {
-                case "local": score = ScoreManager.GetScore(ScoreManager.QueryScores(v => v.ID == ReplayOfflineScoreID).First()); break;
-                case "online": score = ScoreManager.GetScore(ScoreManager.QueryScores(v => v.OnlineID == ReplayOnlineScoreID).First()); break;
+                case "local": score = ScoreManager.GetScore(ScoreManager.Query(v => v.ID == ReplayOfflineScoreID)); break;
+                case "online": score = ScoreManager.GetScore(ScoreManager.Query(v => v.OnlineID == ReplayOnlineScoreID)); break;
                 case "auto":
                     var ruleset = new OsuRuleset();
 
@@ -130,7 +131,7 @@ namespace osu_replay_renderer_netcore
                     var working = BeatmapManager.GetWorkingBeatmap(beatmapInfo);
                     var beatmap = working.GetPlayableBeatmap(ruleset.RulesetInfo, new[] { ruleset.GetAutoplayMod() });
                     score = ruleset.GetAutoplayMod().CreateReplayScore(beatmap, new[] { ruleset.GetAutoplayMod() });
-                    score.ScoreInfo.BeatmapInfoID = beatmapInfo.ID;
+                    score.ScoreInfo.BeatmapInfo = beatmapInfo;
                     score.ScoreInfo.Mods = new[] { ruleset.GetAutoplayMod() };
                     score.ScoreInfo.Ruleset = ruleset.RulesetInfo;
                     break;
@@ -142,7 +143,7 @@ namespace osu_replay_renderer_netcore
                         try
                         {
                             score = decoder.Parse(stream);
-                            score.ScoreInfo.BeatmapInfoID = BeatmapManager.QueryBeatmap(v => v.OnlineID == score.ScoreInfo.BeatmapInfo.OnlineID).ID;
+                            score.ScoreInfo.BeatmapInfo = BeatmapManager.QueryBeatmap(v => v.OnlineID == score.ScoreInfo.BeatmapInfo.OnlineID);
                         }
                         catch (LegacyScoreDecoder.BeatmapNotFoundException e)
                         {
@@ -192,7 +193,8 @@ namespace osu_replay_renderer_netcore
             var rulesetInfo = score.ScoreInfo.Ruleset;
             Ruleset.Value = rulesetInfo;
 
-            var working = BeatmapManager.GetWorkingBeatmap(BeatmapManager.QueryBeatmap(beatmap => score.ScoreInfo.BeatmapInfoID == beatmap.ID));
+            var beatmap = BeatmapManager.QueryBeatmap(beatmap => beatmap.ID == score.ScoreInfo.BeatmapInfo.ID);
+            var working = BeatmapManager.GetWorkingBeatmap(beatmap);
             Beatmap.Value = working;
             SelectedMods.Value = score.ScoreInfo.Mods;
 
@@ -236,11 +238,11 @@ namespace osu_replay_renderer_netcore
                     container.RemoveAll(v => true);
                     container.Height = 0;
 
-                    MethodInfo scrollContentMethod = typeof(ResultsScreen).GetDeclaredMethod("get_VerticalScrollContent");
+                    MethodInfo scrollContentMethod = typeof(ResultsScreen).GetInstanceMethod("get_VerticalScrollContent");
                     OsuScrollContainer scrollContent = scrollContentMethod.Invoke(soloResult, null) as OsuScrollContainer;
 
                     var statisticsPanel = (scrollContent.Child as Container).Children[0] as StatisticsPanel;
-                    MethodInfo internalChildStatsMethod = typeof(CompositeDrawable).GetDeclaredMethod("get_InternalChild");
+                    MethodInfo internalChildStatsMethod = typeof(CompositeDrawable).GetInstanceMethod("get_InternalChild");
                     var container2 = internalChildStatsMethod.Invoke(statisticsPanel, null) as Container;
                     container2.Remove(container2.Children[1]); // kill the loading spinner
 
@@ -277,7 +279,7 @@ namespace osu_replay_renderer_netcore
             {
                 player.ManipulateClock = true;
 
-                MethodInfo getGameplayClockContainer = typeof(Player).GetDeclaredMethod("get_GameplayClockContainer");
+                MethodInfo getGameplayClockContainer = typeof(Player).GetInstanceMethod("get_GameplayClockContainer");
                 var clockContainer = getGameplayClockContainer.Invoke(player, null) as GameplayClockContainer;
                 //clockContainer.GameplayClock
 

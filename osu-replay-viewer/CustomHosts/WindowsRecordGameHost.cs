@@ -1,4 +1,5 @@
-﻿using osu.Framework.Configuration;
+﻿using osu.Framework;
+using osu.Framework.Configuration;
 using osu.Framework.Extensions.IEnumerableExtensions;
 using osu.Framework.Input.Handlers;
 using osu.Framework.Logging;
@@ -37,7 +38,10 @@ namespace osu_replay_renderer_netcore.CustomHosts
         public ExternalFFmpegEncoder Encoder { get; set; }
         public bool UsingEncoder { get; set; } = true;
 
-        public WindowsRecordGameHost(string gameName = null, int frameRate = 60) : base(gameName, false)
+        public WindowsRecordGameHost(string gameName = null, int frameRate = 60) : base(gameName, new HostOptions
+        {
+            BindIPC = false
+        })
         {
             recordClock = new RecordClock(frameRate);
             PrepareAudioRendering();

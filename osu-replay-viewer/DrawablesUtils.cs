@@ -25,13 +25,13 @@ namespace osu_replay_renderer_netcore
 
         public static Drawable GetInternalChild(CompositeDrawable drawable)
         {
-            MethodInfo internalChildMethod = typeof(CompositeDrawable).GetDeclaredMethod("get_InternalChild");
+            MethodInfo internalChildMethod = typeof(CompositeDrawable).GetInstanceMethod("get_InternalChild");
             return internalChildMethod.Invoke(drawable, null) as Drawable;
         }
 
         public static IReadOnlyList<Drawable> GetInternalChildren(CompositeDrawable drawable)
         {
-            MethodInfo internalChildMethod = typeof(CompositeDrawable).GetDeclaredMethod("get_InternalChildren");
+            MethodInfo internalChildMethod = typeof(CompositeDrawable).GetInstanceMethod("get_InternalChildren");
             return internalChildMethod.Invoke(drawable, null) as IReadOnlyList<Drawable>;
         }
     }

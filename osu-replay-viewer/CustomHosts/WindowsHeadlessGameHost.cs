@@ -1,4 +1,5 @@
 ﻿using ManagedBass;
+using osu.Framework;
 using osu.Framework.Configuration;
 using osu.Framework.Extensions.IEnumerableExtensions;
 using osu.Framework.Graphics;
@@ -24,11 +25,10 @@ namespace osu_replay_renderer_netcore.CustomHosts
         //public int SampleMixerHandle { get; set; } = 0;
 
         public WindowsHeadlessGameHost(
-            string gameName = null,
-            bool bindIPC = false,
-            bool realtime = true,
-            bool portableInstallation = false
-        ) : base(gameName, bindIPC, realtime, portableInstallation)
+            string gameName,
+            HostOptions options,
+            bool realtime = true
+        ) : base(gameName, options, realtime)
         {}
 
         //int frames = 0;

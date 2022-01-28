@@ -15,7 +15,11 @@ to upgrade to make UI matches with actual game
 ## Features
 - View downloaded replays
 - Download replays (if you can log in)
-- ~~Render replays to sequence of images~~ (it actually render replay to a video now)
+- Render replays to video file (FFmpeg required)
+
+## Notices about 2022.128.0
+osu! 2022.128.0 uses GUID for local beatmaps ID instead of auto-increasing integer ID. Please update
+your automation scripts to prevent unexpected issues.
 
 ## Requirements
 - [.NET 5.0](https://dotnet.microsoft.com/download/dotnet/5.0)

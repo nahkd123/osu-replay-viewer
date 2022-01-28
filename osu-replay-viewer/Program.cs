@@ -87,7 +87,7 @@ namespace osu_replay_renderer_netcore
                         Description = "Select a replay to view. This options must be always present (excluding -list options)",
                         DoubleDashes = new[] { "view" },
                         SingleDash = new[] { "view", "i" },
-                        Parameters = new[] { "Type (local/online/file/auto)", "Score ID/Beatmap ID (auto)/File.osr" }
+                        Parameters = new[] { "Type (local/online/file/auto)", "Score GUID/Beatmap ID (auto)/File.osr" }
                     },
                     generalHelp = new()
                     {
@@ -269,25 +269,35 @@ namespace osu_replay_renderer_netcore
                     string path = generalView[1];
                     bool isValidInteger = long.TryParse(generalView[1], out long id);
                     bool isValidInt32 = id < int.MaxValue;
+                    bool isValidGuid = Guid.TryParse(generalView[1], out var guid);
 
-                    if (!generalView[0].Equals("file") && !isValidInteger) throw new CLIException
+                    if (
+                        (generalView[0].Equals("local") && !isValidGuid) ||
+                        ((
+                            generalView[0].Equals("auto") ||
+                            generalView[0].Equals("online")
+                        ) && !isValidInteger)
+                    ) throw new CLIException
                     {
                         Cause = "Command-line Arguments (Parsing)",
-                        DisplayMessage = $"Value {generalView[1]} is not an integer"
+                        DisplayMessage = $"Value {generalView[1]} is invaild"
                     };
 
                     switch (generalView[0])
                     {
                         case "local":
                         case "auto":
-                            if (!isValidInt32) throw new CLIException
+                            if (generalView[0].Equals("local")) game.ReplayOfflineScoreID = guid;
+                            else
                             {
-                                Cause = "Command-line Arguments (Parsing)",
-                                DisplayMessage = $"{id} exceed int32 limit (larger than {int.MaxValue})",
-                                Suggestions = new[] { "Keep the number lower than the limit" }
-                            };
-                            if (generalView[0].Equals("local")) game.ReplayOfflineScoreID = (int)id;
-                            else game.ReplayAutoBeatmapID = (int)id;
+                                if (!isValidInt32) throw new CLIException
+                                {
+                                    Cause = "Command-line Arguments (Parsing)",
+                                    DisplayMessage = $"{id} exceed int32 limit (larger than {int.MaxValue})",
+                                    Suggestions = new[] { "Keep the number lower than the limit" }
+                                };
+                                game.ReplayAutoBeatmapID = (int)id;
+                            }
                             break;
 
                         case "online": game.ReplayOnlineScoreID = id; break;
@@ -353,7 +363,10 @@ namespace osu_replay_renderer_netcore
                 }
                 else if (headlessMode.Triggered)
                 {
-                    var headlessHost = new WindowsHeadlessGameHost("osu", false, true);
+                    var headlessHost = new WindowsHeadlessGameHost("osu", new HostOptions
+                    {
+                        BindIPC = false
+                    });
                     if (headlessLoopback.Triggered)
                     {
                         headlessHost.AudioInputDevice = ParseIntOrThrow(headlessLoopback[0]);
@@ -362,7 +375,10 @@ namespace osu_replay_renderer_netcore
                     }
                     host = headlessHost;
                 }
-                else host = Host.GetSuitableHost("osu", false);
+                else host = Host.GetSuitableDesktopHost("osu", new HostOptions
+                {
+                    BindIPC = false
+                });
             } catch (CLIException cliException)
             {
                 Console.WriteLine("Error while processing CLI arguments:");
