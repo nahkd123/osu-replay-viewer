@@ -110,10 +110,17 @@ namespace osu_replay_renderer_netcore.CustomHosts
 
         private Task<Image<Rgba32>> previousScreenshotTask;
         private bool setupHostInRender = false;
+        private FrameSync previousFrameSyncConfig;
 
         protected virtual void SetupHostInRender()
         {
+            previousFrameSyncConfig = Config.Get<FrameSync>(FrameworkSetting.FrameSync);
             Config.SetValue(FrameworkSetting.FrameSync, FrameSync.Unlimited);
+        }
+
+        public virtual void RevertFrameworkSettings()
+        {
+            Config.SetValue(FrameworkSetting.FrameSync, previousFrameSyncConfig);
         }
 
         protected override void DrawFrame()

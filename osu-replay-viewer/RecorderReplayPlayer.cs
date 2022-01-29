@@ -1,8 +1,10 @@
 ﻿using osu.Framework.Bindables;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Framework.Testing;
 using osu.Framework.Timing;
 using osu.Game.Beatmaps;
+using osu.Game.Graphics.Sprites;
 using osu.Game.Rulesets.Difficulty;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Mods;
@@ -11,6 +13,8 @@ using osu.Game.Rulesets.Objects.Drawables;
 using osu.Game.Scoring;
 using osu.Game.Screens.Play;
 using osu.Game.Screens.Play.HUD;
+using osu.Game.Screens.Play.PlayerSettings;
+using osu_replay_renderer_netcore.Components;
 using osu_replay_renderer_netcore.HUD.Builtin;
 using System;
 using System.Collections.Generic;
@@ -39,6 +43,21 @@ namespace osu_replay_renderer_netcore
             {
                 HUDOverlay.RemoveRecursive(v => v == HUDOverlay.PlayerSettingsOverlay);
                 GameplayClockContainer.RemoveRecursive(v => v is SkipOverlay);
+            }
+            else
+            {
+                var groups = HUDOverlay.PlayerSettingsOverlay.Child as FillFlowContainer<PlayerSettingsGroup>;
+                groups.Children[0].Add(new OsuSpriteText
+                {
+                    Text = "Playback control",
+                    Padding = new MarginPadding() { Horizontal = 10 }
+                });
+                groups.Children[0].Add(new PlaybackControl(GameplayClockContainer)
+                {
+                    RelativeSizeAxes = Axes.X,
+                    AutoSizeAxes = Axes.Y,
+                    Padding = new MarginPadding() { Horizontal = 10 }
+                });
             }
 
             var game = Game as OsuGameRecorder;

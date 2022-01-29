@@ -267,6 +267,7 @@ namespace osu_replay_renderer_netcore
                             if (Host is WindowsRecordGameHost recordHost)
                             {
                                 recordHost.Encoder.FFmpeg.StandardInput.Close();
+                                recordHost.RevertFrameworkSettings();
                                 var buff = recordHost.FinishAudio();
                                 var stream = new FileStream(recordHost.AudioOutput, FileMode.OpenOrCreate);
                                 buff.WriteWave(stream);
