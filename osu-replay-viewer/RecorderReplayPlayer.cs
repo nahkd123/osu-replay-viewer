@@ -85,11 +85,8 @@ namespace osu_replay_renderer_netcore
                 var attrib = timedAttrs[Math.Clamp(attribIndex, 0, timedAttrs.Count - 1)].Attributes;
 
                 // Calculate
-                PerformanceCalculator calc = GameplayState.Ruleset.CreatePerformanceCalculator(
-                    attrib,
-                    GameplayState.Score.ScoreInfo
-                );
-                performanceGraph.PP.Value = calc.Calculate().Total;
+                PerformanceCalculator calc = GameplayState.Ruleset.CreatePerformanceCalculator();
+                performanceGraph.PP.Value = calc.Calculate(GameplayState.Score.ScoreInfo, attrib).Total;
 
                 // TODO: Expose PP to OsuGameRecorder
             };
