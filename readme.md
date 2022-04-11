@@ -21,6 +21,10 @@ to upgrade to make UI matches with actual game
 osu! 2022.128.0 uses GUID for local beatmaps ID instead of auto-increasing integer ID. Please update
 your automation scripts to prevent unexpected issues.
 
+## Important note while using skins
+If you imported skin by osu! Replay Viewer, you need to add `[No name]` to name.
+Example: `osu-replay-viewer --skin import somefile.osk` => `osu-replay-viewer --skin select "somefile [No name]"`
+
 ## Requirements
 - [.NET 5.0](https://dotnet.microsoft.com/download/dotnet/5.0)
 - OpenGL ES 3.0 compatible device
@@ -76,6 +80,12 @@ Usage:
     Alternatives: -view, -i
     View Replay
     Select a replay to view. This options must be always present (excluding -list options)
+
+  --view                   <Type (import/select)> <Skin name/File.osr>
+    Alternatives: -skin, --skin
+    Select skin
+    Select skin for replay
+
 
   --help
     Alternatives: -h

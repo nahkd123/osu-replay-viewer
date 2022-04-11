@@ -20,6 +20,7 @@ namespace osu_replay_renderer_netcore
             OptionDescription generalHelp;
             OptionDescription generalList;
             OptionDescription generalView;
+            OptionDescription skinHelp;
 
             OptionDescription headlessMode;
             OptionDescription headlessLoopback;
@@ -40,6 +41,7 @@ namespace osu_replay_renderer_netcore
             OptionDescription experimental;
             OptionDescription overrideOverlayOptions;
             OptionDescription test;
+            
 
             CommandLineProcessor cli = new()
             {
@@ -91,7 +93,14 @@ namespace osu_replay_renderer_netcore
                         DoubleDashes = new[] { "help" },
                         SingleDash = new[] { "h" }
                     },
-
+                    skinHelp = new ()
+                    {
+                        Name = "Select Skin",
+                        Description = "Select a skin to use",
+                        DoubleDashes = new[] { "skin" },
+                        SingleDash = new[] { "skin", "s" },
+                        Parameters = new[] { "Type (import/select)", "Skin name/File.Osk" }
+                    },
                     // Headless options
                     headlessMode = new()
                     {
@@ -385,6 +394,12 @@ namespace osu_replay_renderer_netcore
                     BindIPC = false
                 });
 
+                if (skinHelp.Triggered)
+                {
+                    game.SkinType = (SkinAction)Enum.Parse(typeof(SkinAction), skinHelp[0][0].ToString().ToUpper()+skinHelp[0].Substring(1));
+                    game.Skin = skinHelp[1];
+                }
+
                 // Misc
                 if (overrideOverlayOptions.Triggered) game.HideOverlaysInPlayer = ParseBoolOrThrow(overrideOverlayOptions.ProcessedParameters[0]);
                 else if (recordMode.Triggered) game.HideOverlaysInPlayer = true;
@@ -405,6 +420,9 @@ namespace osu_replay_renderer_netcore
                 return;
             }
 
+
+ 
+            
             if (recordMode.Triggered) game.DecodeAudio = true;
             host.Run(game);
             host.Dispose();

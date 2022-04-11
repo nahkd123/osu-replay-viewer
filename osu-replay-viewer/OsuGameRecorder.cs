@@ -29,6 +29,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using osu.Framework.Logging;
+using osu.Game.IO.Archives;
+using osu.Game.Skinning;
 
 namespace osu_replay_renderer_netcore
 {
@@ -49,12 +52,32 @@ namespace osu_replay_renderer_netcore
         public int ReplayAutoBeatmapID;
         public string ReplayFileLocation;
 
-        public bool DecodeAudio = false;
+        public bool DecodeAudio { get; set; } = false;
+        public SkinAction SkinType { get; set; } = SkinAction.Select;
+        public string Skin { get; set; } = string.Empty;
         public AudioBuffer DecodedAudio;
         public bool HideOverlaysInPlayer = false;
 
         public OsuGameRecorder()
         {}
+        
+        public Live<SkinInfo> ImportSkin(string skinPath)
+        {
+            
+            if (!File.Exists(skinPath))
+            {
+                Logger.Log($"Skin file not found: {skinPath}", LoggingTarget.Runtime, LogLevel.Error);
+                GracefullyExit();
+                return null;
+            }
+            var skin = SkinManager.Import(new ZipArchiveReader(File.OpenRead(skinPath))).GetAwaiter().GetResult();
+            return skin;
+        }
+        
+        public void SelectSkin(Live<SkinInfo> skin)
+        {
+            SkinManager.CurrentSkinInfo.Value = skin;
+        }
 
         public string GetCurrentBeatmapAudioPath()
         {
@@ -182,15 +205,19 @@ namespace osu_replay_renderer_netcore
 
         private void LoadViewer(Score score)
         {
+            
+
             // Apply some stuffs
             config.SetValue(FrameworkSetting.ConfineMouseMode, ConfineMouseMode.Never);
             if (!(Host is WindowsRecordGameHost)) config.SetValue(FrameworkSetting.FrameSync, FrameSync.VSync);
             Audio.Balance.Value = 0;
-
+            
+            
             ScreenStack = new RecorderScreenStack();
             LoadComponent(ScreenStack);
             Add(ScreenStack);
 
+            
             var rulesetInfo = score.ScoreInfo.Ruleset;
             Ruleset.Value = rulesetInfo;
 
@@ -198,7 +225,7 @@ namespace osu_replay_renderer_netcore
             var working = BeatmapManager.GetWorkingBeatmap(beatmap);
             Beatmap.Value = working;
             SelectedMods.Value = score.ScoreInfo.Mods;
-
+            
             if (DecodeAudio)
             {
                 Console.WriteLine("Decoding audio...");
@@ -212,6 +239,29 @@ namespace osu_replay_renderer_netcore
                 HideOverlays = HideOverlaysInPlayer
             };
 
+            if (!string.IsNullOrEmpty(Skin))
+            {
+                Live<SkinInfo> skin;
+                if (SkinType == SkinAction.Import)
+                {
+                    skin = ImportSkin(Skin);
+                }
+                else
+                {
+                    Logger.Log($"Using skin {Skin}");
+                    skin = SkinManager.Query(c => c.Name == Skin);
+                }
+
+                if (skin is null)
+                {
+                    Logger.Log("Skin not found.", LoggingTarget.Runtime, LogLevel.Error);
+                    GracefullyExit();
+                    return;
+                }
+                SelectSkin(skin);   
+            }
+
+            
             RecorderReplayPlayerLoader loader = new RecorderReplayPlayerLoader(Player);
             ScreenStack.Push(loader);
             ScreenStack.ScreenPushed += ScreenStack_ScreenPushed;
@@ -342,5 +392,11 @@ namespace osu_replay_renderer_netcore
                 _ => "n/a",
             };
         }
+    }
+
+    internal enum SkinAction
+    {
+        Import,
+        Select
     }
 }
