@@ -39,8 +39,10 @@ namespace osu_replay_renderer_netcore
 
             OptionDescription experimental;
             OptionDescription overrideOverlayOptions;
+            OptionDescription applySkin;
+            OptionDescription listSkins;
             OptionDescription test;
-
+            
             CommandLineProcessor cli = new()
             {
                 Options = new[]
@@ -222,6 +224,21 @@ namespace osu_replay_renderer_netcore
                         SingleDash = new[] { "overlay" },
                         Parameters = new[] { "true/false" }
                     },
+                    applySkin = new()
+                    {
+                        Name = "Select Skin",
+                        Description = "Select a skin to use in replay",
+                        DoubleDashes = new[] { "skin" },
+                        SingleDash = new[] { "skin", "s" },
+                        Parameters = new[] { "Type (import/select)", "Skin name/File.osk" }
+                    },
+                    listSkins = new()
+                    {
+                        Name = "List Skins",
+                        Description = "List all available skins",
+                        DoubleDashes = new[] { "list-skin", "list-skins" },
+                        SingleDash = new [] { "lskins", "lskin" }
+                    },
                     test = new()
                     {
                         Name = "Test Mode",
@@ -263,11 +280,18 @@ namespace osu_replay_renderer_netcore
                     game.ListReplays = true;
                     game.ListQuery = query.Triggered ? query[0] : null;
                 }
+                else if (listSkins.Triggered)
+                {
+                    game.SkinActionType = SkinAction.List;
+                }
                 else if (!generalView.Triggered) throw new CLIException
                 {
                     Cause = "General Problem",
-                    DisplayMessage = "--view must be present (except for --list)",
-                    Suggestions = new[] { "Add --list <Type> <ID/Path> to your command" }
+                    DisplayMessage = "--view must be present (except for --list and --list-skins)",
+                    Suggestions = new[] {
+                        "Add --list <Type> <ID/Path> to your command",
+                        "Add --list-skins to your command"
+                    }
                 };
                 else
                 {
@@ -384,6 +408,12 @@ namespace osu_replay_renderer_netcore
                 {
                     BindIPC = false
                 });
+
+                if (applySkin.Triggered)
+                {
+                    game.SkinActionType = (SkinAction)Enum.Parse(typeof(SkinAction), applySkin[0][0].ToString().ToUpper() + applySkin[0].Substring(1));
+                    game.Skin = applySkin[1];
+                }
 
                 // Misc
                 if (overrideOverlayOptions.Triggered) game.HideOverlaysInPlayer = ParseBoolOrThrow(overrideOverlayOptions.ProcessedParameters[0]);
