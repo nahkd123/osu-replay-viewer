@@ -13,17 +13,26 @@ to upgrade to make UI matches with actual game
   we're running outside the official client)
 
 ## Features
-- View downloaded replays
+- View downloaded replays (now with custom skins support)
 - Download replays (if you can log in)
 - Render replays to video file (FFmpeg required)
 
-## Notices about 2022.128.0
-osu! 2022.128.0 uses GUID for local beatmaps ID instead of auto-increasing integer ID. Please update
-your automation scripts to prevent unexpected issues.
+## Basic Usage
+```sh
+# List all downloaded replays
+# Look for replay GUID (something like f1bb0aa3-5111-4534-b93d-e1e20074f7fe) and pass it to
+# --view local <GUID>
+osu-replay-viewer --list
 
-## Important note while using skins
-If you imported skin by osu! Replay Viewer, you need to add `[No name]` to name.
-Example: `osu-replay-viewer --skin import somefile.osk` => `osu-replay-viewer --skin select "somefile [No name]"`
+# View replay
+osu-replay-viewer --view local f1bb0aa3-5111-4534-b93d-e1e20074f7fe
+
+# List all available skins
+osu-replay-viewer --list-skin
+
+# View replay with given skin
+osu-replay-viewer --skin select "osu!classic" --view local f1bb0aa3-5111-4534-b93d-e1e20074f7fe
+```
 
 ## Requirements
 - [.NET 5.0](https://dotnet.microsoft.com/download/dotnet/5.0)
@@ -61,7 +70,7 @@ Usage:
     Always Yes
     Always answer yes to all prompts. Similar to 'command | yes'
 
-  --mod-override
+  --mod-override           <<Mod Name/acronyms:AC>>
     Alternatives: -MOD
     Mod Override
     Override Mod(s). You can use 'no-mod' or 'acronyms:NM' to clear all mods
@@ -76,16 +85,10 @@ Usage:
     List Replays
     List all local replays
 
-  --view                   <Type (local/online/file/auto)> <Score ID/Beatmap ID (auto)/File.osr>
+  --view                   <Type (local/online/file/auto)> <Score GUID/Beatmap ID (auto)/File.osr>
     Alternatives: -view, -i
     View Replay
     Select a replay to view. This options must be always present (excluding -list options)
-
-  --view                   <Type (import/select)> <Skin name/File.osr>
-    Alternatives: -skin, --skin
-    Select skin
-    Select skin for replay
-
 
   --help
     Alternatives: -h
@@ -112,6 +115,11 @@ Usage:
     Record Output
     Set record output
 
+  --record-audio           <Output = <--record-output>.wav>
+    Alternatives: --record-audio-output, -AO
+    Record Audio Output
+    Set record audio output (the file is always in RIFF Wave format)
+
   --record-resolution      <Width = 1280> <Height = 600>
     Alternatives: -RSL
     Record Resolution
@@ -121,6 +129,11 @@ Usage:
     Alternatives: -FPS
     Record FPS
     Set the output FPS
+
+  --jpeg
+    Alternatives: -JPG
+    Jpeg Output Mode
+    Send Jpeg data to FFmpeg process instead of raw pixels
 
   --ffmpeg-preset          <Preset = slow>
     Alternatives: -FPR
@@ -141,6 +154,31 @@ Usage:
     Alternatives: -FENC
     FFmpeg Video Encoder
     Set video encoder for FFmpeg. 'ffmpeg -encoders' for the list
+
+  --ffmpeg-bitrate         <Bitrate = 100M>
+    Alternatives: -FQ
+    FFmpeg Global Quality
+    Set the max bitrate for output video
+
+  --experimental           <Flag>
+    Alternatives: -experimental
+    Experimental Toggle
+    Toggle experimental feature
+
+  --overlay-override       <true/false>
+    Alternatives: -overlay
+    Override Overlay Options
+    Control the visiblity of player overlay
+
+  --skin                   <Type (import/select)> <Skin name/File.osk>
+    Alternatives: -skin, -s
+    Select Skin
+    Select a skin to use in replay
+
+  --list-skin
+    Alternatives: --list-skins, -lskins, -lskin
+    List Skins
+    List all available skins
 ```
 
 ## Build

@@ -53,7 +53,7 @@ namespace osu_replay_renderer_netcore
         public string ReplayFileLocation;
 
         public bool DecodeAudio { get; set; } = false;
-        public SkinAction SkinType { get; set; } = SkinAction.Select;
+        public SkinAction SkinActionType { get; set; } = SkinAction.Select;
         public string Skin { get; set; } = string.Empty;
         public AudioBuffer DecodedAudio;
         public bool HideOverlaysInPlayer = false;
@@ -128,6 +128,24 @@ namespace osu_replay_renderer_netcore
                         Console.WriteLine();
                     }
                     catch (RulesetLoadException) { }
+                }
+                Console.WriteLine("--------------------");
+                Console.WriteLine();
+                GracefullyExit();
+                return;
+            }
+            if (SkinActionType == SkinAction.List)
+            {
+
+                Console.WriteLine();
+                Console.WriteLine("--------------------");
+                Console.WriteLine("Listing all available skins:");
+
+                RealmAccess realm = (RealmAccess)typeof(SkinManager).GetField("realm", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(SkinManager);
+
+                foreach (SkinInfo info in realm.Run(r => r.All<SkinInfo>().Detach()))
+                {
+                    Console.WriteLine($"- '{info.Name}'");
                 }
                 Console.WriteLine("--------------------");
                 Console.WriteLine();
@@ -216,7 +234,6 @@ namespace osu_replay_renderer_netcore
             ScreenStack = new RecorderScreenStack();
             LoadComponent(ScreenStack);
             Add(ScreenStack);
-
             
             var rulesetInfo = score.ScoreInfo.Ruleset;
             Ruleset.Value = rulesetInfo;
@@ -242,7 +259,7 @@ namespace osu_replay_renderer_netcore
             if (!string.IsNullOrEmpty(Skin))
             {
                 Live<SkinInfo> skin;
-                if (SkinType == SkinAction.Import)
+                if (SkinActionType == SkinAction.Import)
                 {
                     skin = ImportSkin(Skin);
                 }
@@ -258,9 +275,8 @@ namespace osu_replay_renderer_netcore
                     GracefullyExit();
                     return;
                 }
-                SelectSkin(skin);   
+                SelectSkin(skin);
             }
-
             
             RecorderReplayPlayerLoader loader = new RecorderReplayPlayerLoader(Player);
             ScreenStack.Push(loader);
@@ -397,6 +413,7 @@ namespace osu_replay_renderer_netcore
     internal enum SkinAction
     {
         Import,
-        Select
+        Select,
+        List
     }
 }
