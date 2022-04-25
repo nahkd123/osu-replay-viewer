@@ -113,10 +113,36 @@ namespace osu_replay_renderer_netcore
             }
             
             Score score;
+            ScoreInfo scoreInfo = null;
             switch (ReplayViewType)
             {
-                case "local": score = ScoreManager.GetScore(ScoreManager.Query(v => v.ID == ReplayOfflineScoreID)); break;
-                case "online": score = ScoreManager.GetScore(ScoreManager.Query(v => v.OnlineID == ReplayOnlineScoreID)); break;
+                case "local":
+                    scoreInfo = ScoreManager.Query(v => v.ID == ReplayOfflineScoreID);
+                    if (scoreInfo == null)
+                    {
+                        Console.Error.WriteLine();
+                        Console.Error.WriteLine("Unable to find local replay: " + ReplayOfflineScoreID);
+                        Console.Error.WriteLine("- Make sure the replay ID exists when you use --list argument");
+                        Console.Error.WriteLine("- You could have deleted that replay in your osu!lazer installation");
+                        Console.Error.WriteLine();
+                        GracefullyExit();
+                        return;
+                    }
+                    score = ScoreManager.GetScore(scoreInfo);
+                    break;
+                case "online":
+                    scoreInfo = ScoreManager.Query(v => v.OnlineID == ReplayOnlineScoreID);
+                    if (scoreInfo == null)
+                    {
+                        Console.Error.WriteLine();
+                        Console.Error.WriteLine("Unable to find local replay with online ID = " + ReplayOnlineScoreID);
+                        Console.Error.WriteLine("- Make sure you have downloaded that replay");
+                        Console.Error.WriteLine();
+                        GracefullyExit();
+                        return;
+                    }
+                    score = ScoreManager.GetScore(scoreInfo);
+                    break;
                 case "auto":
                     var ruleset = new OsuRuleset();
 
