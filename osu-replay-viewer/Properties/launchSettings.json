@@ -2,7 +2,7 @@
   "profiles": {
     "osu-replay-renderer-netcore": {
       "commandName": "Project",
-      "commandLineArgs": "view auto:2361635"
+      "commandLineArgs": "--view auto 1762724 -skin select \"Simplified + [No name]\""
     }
   }
 }
