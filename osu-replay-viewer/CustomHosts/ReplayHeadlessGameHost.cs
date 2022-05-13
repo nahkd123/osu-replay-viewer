@@ -12,9 +12,9 @@ using System.Runtime.InteropServices;
 
 namespace osu_replay_renderer_netcore.CustomHosts
 {
-    public class WindowsHeadlessGameHost : HeadlessGameHost
+    public class ReplayHeadlessGameHost : HeadlessGameHost
     {
-        public override IEnumerable<string> UserStoragePaths => Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData).Yield();
+        public override IEnumerable<string> UserStoragePaths => CrossPlatform.GetUserStoragePaths();
 
         public string OutputAudioToFile { get; set; } = null;
         public int AudioInputDevice { get; set; } = -1;
@@ -24,7 +24,7 @@ namespace osu_replay_renderer_netcore.CustomHosts
         //public int TrackMixerHandle { get; set; } = 0;
         //public int SampleMixerHandle { get; set; } = 0;
 
-        public WindowsHeadlessGameHost(
+        public ReplayHeadlessGameHost(
             string gameName,
             HostOptions options,
             bool realtime = true

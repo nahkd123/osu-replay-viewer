@@ -364,7 +364,7 @@ namespace osu_replay_renderer_netcore
 
                     int fps = ParseIntOrThrow(recordFPS[0]);
                     int blending = ParseIntOrThrow(ffmpegFramesBlending[0]);
-                    var recordHost = new WindowsRecordGameHost("osu", fps * blending);
+                    var recordHost = new ReplayRecordGameHost("osu", fps * blending);
                     host = recordHost;
 
                     recordHost.Resolution = new System.Drawing.Size
@@ -392,7 +392,7 @@ namespace osu_replay_renderer_netcore
                 }
                 else if (headlessMode.Triggered)
                 {
-                    var headlessHost = new WindowsHeadlessGameHost("osu", new HostOptions
+                    var headlessHost = new ReplayHeadlessGameHost("osu", new HostOptions
                     {
                         BindIPC = false
                     });
