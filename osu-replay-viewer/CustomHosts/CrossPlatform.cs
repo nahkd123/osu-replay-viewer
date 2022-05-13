@@ -1,11 +1,9 @@
 ﻿using osu.Framework;
 using osu.Framework.Platform;
+using osu.Framework.Platform.Windows;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace osu_replay_renderer_netcore.CustomHosts
 {
@@ -27,6 +25,19 @@ namespace osu_replay_renderer_netcore.CustomHosts
                     yield return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), ".local", "share");
                     // foreach (string path in baseHost.UserStoragePaths) yield return path;
                     break;
+
+                default: throw new InvalidOperationException($"Unknown platform: {Enum.GetName(typeof(RuntimeInfo.Platform), RuntimeInfo.OS)}");
+            }
+        }
+
+        public static IWindow GetWindow()
+        {
+            switch (RuntimeInfo.OS)
+            {
+                case RuntimeInfo.Platform.Windows: return new WindowsWindow();
+                case RuntimeInfo.Platform.Linux:
+                case RuntimeInfo.Platform.macOS:
+                    return new SDL2DesktopWindow();
 
                 default: throw new InvalidOperationException($"Unknown platform: {Enum.GetName(typeof(RuntimeInfo.Platform), RuntimeInfo.OS)}");
             }
