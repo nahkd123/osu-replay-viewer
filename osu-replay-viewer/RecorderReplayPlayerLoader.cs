@@ -35,7 +35,7 @@ namespace osu_replay_renderer_netcore
             {
                 mapMetadata.Content[0].ToArray(),
                 mapMetadata.Content[1].ToArray(),
-                CreateNewRulesetMetadata("Played by", player.GivenScore.ScoreInfo.UserString),
+                CreateNewRulesetMetadata("Played by", player.GivenScore.ScoreInfo.User.Username),
                 CreateNewRulesetMetadata("Ruleset", player.GivenScore.ScoreInfo.Ruleset.Name)
             };
         }
