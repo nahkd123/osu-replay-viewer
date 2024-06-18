@@ -1,3 +1,16 @@
+#【Deprecation notice】
+It has been more than a year since the last commit (other than update to this README). I can't allocate time to maintain this project, hence the inclusion of this deprecation notice. However, it is more than just not being able to have time for this.
+
+## Implementation is janky
+The current implementation involves IPC with ffmpeg, which impacts the performance during rendering. Although I am streaming raw image data from game process to ffmpeg over stdin, it can be done better by doing all encoding directly from game framebuffer to ffmpeg using C# binding.
+
+My wish is being able to make animation using o!f, then render the animation as video frames and include them in container like MP4 or MKV, without resorting to IPC. My theory is that, if I make a new renderer that's basically OpenGL but for offline rendering, I can send the framebuffer to ffmpeg directly. If you want to implement this then you also want to change the clock to manually control as well, because the current clock uses the system time on o!f by default.
+
+## Speed adjustment mods will not works
+Double time, Half time and other speed adjustment mods will not works.
+
+---
+
 # osu! Replay Viewer
 _Based on osu!lazer_
 
