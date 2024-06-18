@@ -1,4 +1,4 @@
-#【Deprecation notice】
+# 【Deprecation notice】
 It has been more than a year since the last commit (other than update to this README). I can't allocate time to maintain this project, hence the inclusion of this deprecation notice. However, it is more than just not being able to have time for this.
 
 ## Implementation is janky
